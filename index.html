@@ -684,9 +684,9 @@ async function pullSync(silent){
       if(remote.updatedAt<state.updatedAt) scheduleAutoPush();
       return;
     }
-    const localToken=state.githubToken, localAuto=state.autoSync;   // 本机私有设置不被覆盖
+    const localToken=state.githubToken, localAuto=state.autoSync, localGid=state.gistId;   // 本机私有设置不被覆盖
     state=Object.assign({},DEFAULT,remote);
-    state.githubToken=localToken; state.autoSync=localAuto;
+    state.githubToken=localToken; state.autoSync=localAuto; state.gistId=localGid;
     state.syncedAt=Date.now(); saveLocal();
     if(state.lastResetDate!==todayStr()) resetDaily();
     renderAll(); syncing=false; refreshBadge();
