@@ -157,6 +157,10 @@
   .toggle.on{background:var(--brand)}
   .toggle.on::after{transform:translateX(20px)}
   .tip b{color:var(--sub)}
+  .note-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .note-time{font-size:11px;color:var(--faint)}
+  .note-text{margin-top:2px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  textarea#noteInput{flex:1;resize:vertical;min-height:46px;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)}
 </style>
 </head>
 <body>
@@ -276,6 +280,16 @@
         <div class="addline"><input type="text" id="custName" placeholder="客户名"><button class="btn btn-ghost btn-sm" id="custAdd">+</button></div>
       </div>
     </section>
+    <section class="sec" id="sec-notes">
+      <div class="card">
+        <div class="card-h"><h3>随记 · 灵感速记</h3><span class="hint">随便想，随时记</span></div>
+        <div class="addline">
+          <textarea id="noteInput" rows="2" placeholder="蹦出来的想法、碎片、灵感…记下来，不急着整理"></textarea>
+          <button class="btn btn-primary btn-sm" id="noteAdd">记一笔</button>
+        </div>
+        <div id="noteList" class="note-list"></div>
+      </div>
+    </section>
 
     <!-- 同步 -->
     <section class="sec" id="sec-sync">
@@ -343,6 +357,7 @@
     <button data-tab="tasks"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>任务</button>
     <button data-tab="life"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-7 5-13 14-14-1 9-7 14-14 14z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></span>生活</button>
     <button data-tab="customers"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.9"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.9"/></svg></span>客户</button>
+    <button data-tab="notes"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>随记</button>
     <button data-tab="sync"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 0 0-14-4M4 13a8 8 0 0 0 14 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M4 4v4h4M20 20v-4h-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>同步</button>
   </nav>
 </div>
@@ -362,7 +377,7 @@ const DEFAULT={
   updatedAt:Date.now(), gistId:null, githubToken:null, syncedAt:null, autoSync:true, lastResetDate:todayStr(),
   today:{date:todayStr(),energy:7,mood:'',keyword:''},
   top3:[], accounts:{industry:[],sales:[],english:[],body:[]},
-  tasks:[], customers:[],
+  tasks:[], customers:[], notes:[],
   life:{bed:'',wake:'',coffee:[],stretch:false,weeklyExercise:0},
   journal:{done:'',evidence:'',tomorrow:''},
   history:[]
@@ -379,6 +394,7 @@ function load(){
       if(typeof s.autoSync!=='boolean') s.autoSync=true;
       const st=Object.assign({},DEFAULT,s);
       if(!Array.isArray(st.history))st.history=[];
+      if(!Array.isArray(st.notes))st.notes=[];
       return st;
     }
   }catch(e){}
@@ -437,6 +453,7 @@ function renderAll(){
   renderTasks();
   renderLife();
   renderCustomers();
+  renderNotes();
   renderSync();
   renderTrend();
 }
@@ -544,6 +561,19 @@ function renderCustomers(){
     el.appendChild(d);
   });
 }
+function renderNotes(){
+  const el=document.getElementById('noteList');
+  if(!state.notes.length){el.innerHTML='<div class="empty">还没有随记，想到啥随手记一笔</div>';return;}
+  el.innerHTML='';
+  state.notes.slice().reverse().forEach(n=>{
+    const d=document.createElement('div');d.className='item';
+    const t=new Date(n.ts);
+    const ts=(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    d.innerHTML=`<div class="txt"><span class="note-time">${ts}</span><div class="note-text">${esc(n.text)}</div></div><button class="del">×</button>`;
+    d.querySelector('.del').onclick=()=>{state.notes=state.notes.filter(x=>x.id!=n.id);save();renderNotes();};
+    el.appendChild(d);
+  });
+}
 function renderSync(){
   const hasToken=!!state.githubToken;
   document.getElementById('tokenBox').style.display=hasToken?'none':'block';
@@ -577,6 +607,13 @@ document.getElementById('custAdd').onclick=()=>{
   const inp=document.getElementById('custName');const v=inp.value.trim();if(!v)return;
   state.customers.push({id:uid(),name:v,stage:'',note:''});inp.value='';save();renderCustomers();
 };
+document.getElementById('noteAdd').onclick=()=>{
+  const inp=document.getElementById('noteInput');const v=inp.value.trim();if(!v)return;
+  state.notes.push({id:uid(),text:v,ts:Date.now()});inp.value='';save();renderNotes();
+};
+document.getElementById('noteInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('noteAdd').click();}
+});
 document.getElementById('newDayBtn').onclick=()=>{
   if(!confirm('清空今日的精力 / 情绪 / Top3 / 日记 / 生活记录？\n（客户库、账户证据、任务会保留）'))return;
   resetDaily(); renderAll();
