@@ -161,8 +161,22 @@
   .note-time{font-size:11px;color:var(--faint)}
   .note-text{margin-top:2px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
   textarea#noteInput{flex:1;resize:vertical;min-height:46px;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)}
-  .note-date{font-size:12px;font-weight:600;color:var(--sub);margin:16px 0 4px;padding-left:2px}
+  .note-date{font-size:12px;font-weight:600;color:var(--sub);margin:16px 0 4px;padding-left:2px;
+    display:flex;align-items:center;gap:7px}
   .note-date:first-child{margin-top:2px}
+  .note-date::after{content:"";flex:1;height:1px;background:var(--line)}
+  .note-date + .item{border-top:none}
+  /* 统一时间戳 */
+  .stamp{font-size:11px;color:var(--faint);font-weight:500;letter-spacing:.2px}
+  .stamp.old{color:#B9BEC6}
+  /* 折叠按钮 */
+  .fold{margin-top:8px;width:100%;background:var(--blue-bg);color:var(--blue-ink);border:none;
+    border-radius:9px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.12s}
+  .fold:active{transform:scale(.98)}
+  .acc .mini{flex-direction:column;align-items:stretch;gap:2px}
+  .acc .mini .m-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .acc .mini .m-t{font-size:10.5px;color:var(--faint);line-height:1.3}
+  .card-h .hint.date{color:var(--blue-ink);background:var(--blue-bg);padding:3px 9px;border-radius:8px;font-weight:600}
 </style>
 </head>
 <body>
@@ -189,7 +203,7 @@
         <span class="note">每日重置，昨日自动归档留趋势（客户 / 账户 / 任务保留）</span>
       </div>
       <div class="card">
-        <div class="card-h"><h3>今日状态</h3><span class="hint">随手填</span></div>
+        <div class="card-h"><h3>今日状态</h3><span class="hint date" data-today></span></div>
         <label>精力（1–10）</label>
         <div class="energy" id="energyPicker"></div>
         <label>情绪</label>
@@ -199,7 +213,7 @@
       </div>
 
       <div class="card">
-        <div class="card-h"><h3>今日三个关键行动</h3><span class="hint">最多 3 个</span></div>
+        <div class="card-h"><h3>今日三个关键行动</h3><span class="hint date" data-today></span></div>
         <div id="top3List"></div>
         <div class="addline">
           <select id="top3Type">
@@ -227,7 +241,7 @@
     <!-- 复利账户 -->
     <section class="sec" id="sec-accounts">
       <div class="card">
-        <div class="card-h"><h3>四个复利账户</h3><span class="hint">每天存一点</span></div>
+        <div class="card-h"><h3>四个复利账户</h3><span class="hint">每格只显示最新一条 · 点展开看历史</span></div>
         <div class="acc-grid">
           <div class="acc ind"><h4><svg class="aicon" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9-2.8.9-5.5-4-3.9 5.5-.8z" stroke="#EA6A3F" stroke-width="1.8" stroke-linejoin="round"/></svg>行业认知</h4><div id="acc-industry"></div>
             <div class="addline"><input type="text" id="acc-industry-in" placeholder="新证据"><button class="btn btn-ghost btn-sm" data-acc="industry">+</button></div></div>
@@ -244,7 +258,7 @@
     <!-- 任务池 -->
     <section class="sec" id="sec-tasks">
       <div class="card">
-        <div class="card-h"><h3>任务池</h3><span class="hint">弹性，不排死日程</span></div>
+        <div class="card-h"><h3>任务池</h3><span class="hint">按加入日期分组</span></div>
         <div id="taskList"></div>
         <div class="addline">
           <select id="taskCat"><option value="work">工作</option><option value="growth">成长</option><option value="life">生活</option></select>
@@ -257,7 +271,7 @@
     <!-- 生活 -->
     <section class="sec" id="sec-life">
       <div class="card">
-        <div class="card-h"><h3>能量管理</h3><span class="hint">管能量，不管数据</span></div>
+        <div class="card-h"><h3>能量管理</h3><span class="hint date" data-today></span></div>
         <div class="row">
           <div><label>入睡</label><input type="time" id="bedTime"></div>
           <div><label>起床</label><input type="time" id="wakeTime"></div>
@@ -277,7 +291,7 @@
     <!-- 客户 -->
     <section class="sec" id="sec-customers">
       <div class="card">
-        <div class="card-h"><h3>客户库</h3><span class="hint">轻量记录</span></div>
+        <div class="card-h"><h3>客户库</h3><span class="hint">按建档日期分组</span></div>
         <div id="custList"></div>
         <div class="addline"><input type="text" id="custName" placeholder="客户名"><button class="btn btn-ghost btn-sm" id="custAdd">+</button></div>
       </div>
@@ -379,6 +393,42 @@ function dateOf(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.get
 function hhmm(ts){const t=new Date(ts);return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
 function typeLabel(t){return t=='work'?'工作':t=='growth'?'成长':'生活';}
 function accName(a){return a=='industry'?'行业认知':a=='sales'?'销售能力':a=='english'?'英语资产':'身体情绪';}
+/* ---- 统一时间线工具 ---- */
+function dayLabel(d){ if(!d||d==='更早')return '更早（无日期）'; return d===todayStr()?'今天 · '+d:(d===yesterdayStr()?'昨天 · '+d:d); }
+/* 单条记录的时间戳文案：今天 15:20 / 昨天 09:04 / 08-01 14:30 / 更早 */
+function stamp(o){
+  if(o&&o.ts){ const d=dateOf(o.ts);
+    return (d===todayStr()?'今天':d===yesterdayStr()?'昨天':d.slice(5).replace('-','/'))+' '+hhmm(o.ts); }
+  if(o&&o.date&&o.date!=='更早'){
+    return o.date===todayStr()?'今天':(o.date===yesterdayStr()?'昨天':o.date.slice(5).replace('-','/'));
+  }
+  return '更早（无日期）';
+}
+function byNew(a,b){return (b.ts||0)-(a.ts||0);}
+/* 老数据一律补齐时间字段，只加不删 */
+function migrate(st){
+  if(!Array.isArray(st.notes))st.notes=[];
+  st.notes.forEach(n=>{ if(!n.date) n.date=dateOf(n.ts||Date.now()); });
+  if(!Array.isArray(st.tasks))st.tasks=[];
+  st.tasks.forEach(t=>{ if(!t.id)t.id=uid(); if(!t.date) t.date=t.ts?dateOf(t.ts):'更早'; });
+  if(!Array.isArray(st.top3))st.top3=[];
+  st.top3.forEach(t=>{ if(!t.date) t.date=(st.today&&st.today.date)||todayStr(); });
+  if(!Array.isArray(st.customers))st.customers=[];
+  st.customers.forEach(c=>{ if(!c.id)c.id=uid(); if(!c.date) c.date=c.ts?dateOf(c.ts):'更早'; });
+  const src=(st.accounts&&typeof st.accounts==='object')?st.accounts:{};
+  const na={};                                        // always new object → 不污染 DEFAULT
+  ['industry','sales','english','body'].forEach(k=>{
+    const arr=Array.isArray(src[k])?src[k]:[];
+    na[k]=arr.map(e=> typeof e==='string'
+      ? {id:uid(),text:e,ts:null,date:'更早'}
+      : Object.assign({id:uid(),text:'',ts:null,date:'更早'},e));
+  });
+  st.accounts=na;
+  st.life=Object.assign({bed:'',wake:'',coffee:[],stretch:false,weeklyExercise:0},st.life);
+  st.life.coffee=(Array.isArray(st.life.coffee)?st.life.coffee:[])
+    .map(c=> typeof c==='string' ? {text:c,ts:null} : Object.assign({text:'',ts:null},c));
+  return st;
+}
 
 const DEFAULT={
   updatedAt:Date.now(), gistId:null, githubToken:null, syncedAt:null, autoSync:true, lastResetDate:todayStr(),
@@ -401,10 +451,7 @@ function load(){
       if(typeof s.autoSync!=='boolean') s.autoSync=true;
       const st=Object.assign({},DEFAULT,s);
       if(!Array.isArray(st.history))st.history=[];
-      if(!Array.isArray(st.notes))st.notes=[];
-      if(Array.isArray(st.notes)) st.notes.forEach(n=>{ if(!n.date) n.date=dateOf(n.ts||Date.now()); });
-      if(Array.isArray(st.tasks)) st.tasks.forEach(t=>{ if(!t.date) t.date=todayStr(); });
-      return st;
+      return migrate(st);
     }
   }catch(e){}
   const d=JSON.parse(JSON.stringify(DEFAULT));d.history=[];return d;
@@ -450,6 +497,7 @@ function renderAll(){
   document.getElementById('kwLabel').textContent=state.today.keyword||'–';
   const h=nowHour();
   document.getElementById('helloLine').textContent=(h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好')+'，蓝莓';
+  document.querySelectorAll('[data-today]').forEach(x=>x.textContent='📅 '+(state.today.date||todayStr()));
 
   const ep=document.getElementById('energyPicker');ep.innerHTML='';
   for(let i=1;i<=10;i++){const b=document.createElement('button');b.textContent=i;b.className=i==state.today.energy?'on':'';b.onclick=()=>{state.today.energy=i;save();renderAll();};ep.appendChild(b);}
@@ -494,11 +542,13 @@ function renderTop3(){
   el.innerHTML='';
   state.top3.forEach(it=>{
     const d=document.createElement('div');d.className='item'+(it.done?' done':'');
+    const meta=(it.done&&it.doneTs)?'✓ 完成于 '+stamp({ts:it.doneTs}):'🕘 定于 '+stamp(it);
     d.innerHTML=`<div class="check${it.done?' on':''}">${it.done?'✓':''}</div>
-      <div class="txt"><span class="tag ${it.type}">${it.type=='work'?'工作':it.type=='growth'?'成长':'生活'}</span>
+      <div class="txt"><span class="stamp${(it.ts||it.doneTs)?'':' old'}">${meta}</span>
+      <div style="margin-top:3px"><span class="tag ${it.type}">${typeLabel(it.type)}</span></div>
       <input type="text" value="${esc(it.text)}"></div>
       <button class="del">×</button>`;
-    d.querySelector('.check').onclick=()=>{it.done=!it.done;save();renderTop3();renderAdvice();};
+    d.querySelector('.check').onclick=()=>{it.done=!it.done;it.doneTs=it.done?Date.now():null;save();renderTop3();renderAdvice();};
     d.querySelector('input').oninput=e=>{it.text=e.target.value;save();};
     d.querySelector('.del').onclick=()=>{state.top3=state.top3.filter(x=>x.id!=it.id);save();renderTop3();renderAdvice();};
     el.appendChild(d);
@@ -513,33 +563,81 @@ function renderAdvice(){
   else msg=`进度不错（${done}/${t.length}）。趁状态在把下一个也收了。`;
   document.getElementById('adviceText').textContent=msg;
 }
+const accOpen={industry:false,sales:false,english:false,body:false};
 function renderAcc(a){
   const el=document.getElementById('acc-'+a);el.innerHTML='';
-  state.accounts[a].forEach((e,i)=>{
-    const d=document.createElement('div');d.className='mini';
-    d.innerHTML=`<span>${esc(e)}</span><span class="del" style="font-size:15px">×</span>`;
-    d.querySelector('.del').onclick=()=>{state.accounts[a].splice(i,1);save();renderAcc(a);};
-    el.appendChild(d);
-  });
+  const list=(state.accounts[a]||[]).slice().sort(byNew);      // 最新在最上
+  if(!list.length){
+    el.innerHTML='<div class="empty" style="padding:8px 0;font-size:12px">还没有记录</div>';
+  }else{
+    const open=accOpen[a];
+    (open?list:list.slice(0,1)).forEach(e=>{
+      const d=document.createElement('div');d.className='mini';
+      d.innerHTML=`<div class="m-row"><span>${esc(e.text)}</span><span class="del" style="font-size:15px">×</span></div>
+        <span class="m-t${e.ts?'':' old'}">🕘 ${stamp(e)}</span>`;
+      d.querySelector('.del').onclick=()=>{
+        state.accounts[a]=(state.accounts[a]||[]).filter(x=>x.id!=e.id);save();renderAcc(a);};
+      el.appendChild(d);
+    });
+    if(list.length>1){
+      const b=document.createElement('button');b.className='fold';
+      b.textContent=open?'收起 ▴':'展开其余 '+(list.length-1)+' 条 ▾';
+      b.onclick=()=>{accOpen[a]=!open;renderAcc(a);};
+      el.appendChild(b);
+    }
+  }
   const inp=document.getElementById('acc-'+a+'-in');inp.value='';
   inp.onkeydown=e=>{if(e.key=='Enter')addAcc(a);};
   document.querySelector(`[data-acc="${a}"]`).onclick=()=>addAcc(a);
 }
-function addAcc(a){const inp=document.getElementById('acc-'+a+'-in');const v=inp.value.trim();if(!v)return;state.accounts[a].push(v);inp.value='';save();renderAcc(a);}
+function addAcc(a){
+  const inp=document.getElementById('acc-'+a+'-in');const v=inp.value.trim();if(!v)return;
+  if(!Array.isArray(state.accounts[a]))state.accounts[a]=[];
+  state.accounts[a].push({id:uid(),text:v,ts:Date.now(),date:todayStr()});
+  inp.value='';save();renderAcc(a);
+}
+let taskDoneOpen=false;
+function taskItem(it){
+  const d=document.createElement('div');d.className='item'+(it.done?' done':'');
+  const meta=(it.done&&it.doneTs)?'✓ 完成于 '+stamp({ts:it.doneTs}):'🕘 建于 '+stamp(it);
+  d.innerHTML=`<div class="check${it.done?' on':''}">${it.done?'✓':''}</div>
+    <div class="txt"><span class="stamp${(it.ts||it.doneTs)?'':' old'}">${meta}</span>
+    <div style="margin-top:3px"><span class="tag ${it.cat}">${typeLabel(it.cat)}</span></div>
+    <input type="text" value="${esc(it.text)}"></div><button class="del">×</button>`;
+  d.querySelector('.check').onclick=()=>{it.done=!it.done;it.doneTs=it.done?Date.now():null;save();renderTasks();};
+  d.querySelector('input').oninput=e=>{it.text=e.target.value;save();};
+  d.querySelector('.del').onclick=()=>{state.tasks=state.tasks.filter(x=>x.id!=it.id);save();renderTasks();};
+  return d;
+}
 function renderTasks(){
   const el=document.getElementById('taskList');
   if(!state.tasks.length){el.innerHTML='<div class="empty">任务池是空的，随手扔一个进来</div>';return;}
   el.innerHTML='';
-  state.tasks.forEach(it=>{
-    const d=document.createElement('div');d.className='item'+(it.done?' done':'');
-    d.innerHTML=`<div class="check${it.done?' on':''}">${it.done?'✓':''}</div>
-      <div class="txt"><span class="tag ${it.cat}">${it.cat=='work'?'工作':it.cat=='growth'?'成长':'生活'}</span>
-      <input type="text" value="${esc(it.text)}"></div><button class="del">×</button>`;
-    d.querySelector('.check').onclick=()=>{it.done=!it.done;save();renderTasks();};
-    d.querySelector('input').oninput=e=>{it.text=e.target.value;save();};
-    d.querySelector('.del').onclick=()=>{state.tasks=state.tasks.filter(x=>x.id!=it.id);save();renderTasks();};
-    el.appendChild(d);
-  });
+  const undone=state.tasks.filter(t=>!t.done), done=state.tasks.filter(t=>t.done);
+  if(!undone.length){
+    const e=document.createElement('div');e.className='empty';e.textContent='未完成的都清光了 🎉';el.appendChild(e);
+  }else{
+    const {g,ds}=groupByDate(undone);
+    ds.forEach(d=>{
+      const dv=document.createElement('div');dv.className='note-date';dv.textContent=dayLabel(d)+' 加入';
+      el.appendChild(dv);
+      g[d].slice().sort(byNew).forEach(it=>el.appendChild(taskItem(it)));
+    });
+  }
+  if(done.length){
+    const b=document.createElement('button');b.className='fold';
+    b.textContent=taskDoneOpen?'收起已完成 ▴':'已完成 '+done.length+' 条 ▾';
+    b.onclick=()=>{taskDoneOpen=!taskDoneOpen;renderTasks();};
+    el.appendChild(b);
+    if(taskDoneOpen){
+      const {g,ds}=groupByDate(done);
+      ds.forEach(d=>{
+        const dv=document.createElement('div');dv.className='note-date';dv.textContent=dayLabel(d)+' 加入';
+        el.appendChild(dv);
+        g[d].slice().sort((a,b2)=>(b2.doneTs||0)-(a.doneTs||0)).forEach(it=>el.appendChild(taskItem(it)));
+      });
+    }
+  }
 }
 function renderLife(){
   document.getElementById('bedTime').value=state.life.bed;
@@ -547,8 +645,10 @@ function renderLife(){
   document.getElementById('bedTime').onchange=e=>{state.life.bed=e.target.value;save();};
   document.getElementById('wakeTime').onchange=e=>{state.life.wake=e.target.value;save();};
   const cl=document.getElementById('coffeeList');cl.innerHTML='';
-  state.life.coffee.forEach((c,i)=>{const d=document.createElement('div');d.className='mini';d.style.cssText='font-size:14px';
-    d.innerHTML=`<span>☕ ${esc(c)}</span><span class="del">×</span>`;d.querySelector('.del').onclick=()=>{state.life.coffee.splice(i,1);save();renderLife();};cl.appendChild(d);});
+  state.life.coffee.forEach((c,i)=>{const d=document.createElement('div');d.className='mini';
+    d.style.cssText='font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--line)';
+    d.innerHTML=`<span>☕ ${esc(c.text||'')} <span class="stamp${c.ts?'':' old'}">· ${c.ts?hhmm(c.ts)+' 记':'更早'}</span></span><span class="del">×</span>`;
+    d.querySelector('.del').onclick=()=>{state.life.coffee.splice(i,1);save();renderLife();};cl.appendChild(d);});
   const ci=document.getElementById('coffeeInput');ci.value='';ci.onkeydown=e=>{if(e.key=='Enter')addCoffee();};
   document.getElementById('coffeeAdd').onclick=addCoffee;
   const sc=document.getElementById('stretchChip');sc.className='chip'+(state.life.stretch?' on':'');sc.onclick=()=>{state.life.stretch=!state.life.stretch;save();renderLife();};
@@ -556,36 +656,58 @@ function renderLife(){
   document.getElementById('exMinus').onclick=()=>{state.life.weeklyExercise=Math.max(0,state.life.weeklyExercise-1);save();renderLife();};
   document.getElementById('exPlus').onclick=()=>{state.life.weeklyExercise++;save();renderLife();};
 }
-function addCoffee(){const ci=document.getElementById('coffeeInput');const v=ci.value.trim();if(!v)return;state.life.coffee.push(v);ci.value='';save();renderLife();}
+function addCoffee(){const ci=document.getElementById('coffeeInput');const v=ci.value.trim();if(!v)return;state.life.coffee.push({text:v,ts:Date.now()});ci.value='';save();renderLife();}
+/* 通用：按 date 字段分组，返回排好序的日期数组（'更早' 永远垫底） */
+function groupByDate(arr){
+  const g={};
+  arr.forEach(o=>{const d=o.date||'更早';(g[d]||(g[d]=[])).push(o);});
+  const ds=Object.keys(g).filter(x=>x!=='更早').sort().reverse();
+  if(g['更早'])ds.push('更早');
+  return {g,ds};
+}
+let custOpen=false;
 function renderCustomers(){
   const el=document.getElementById('custList');
   if(!state.customers.length){el.innerHTML='<div class="empty">还没有客户记录</div>';return;}
   el.innerHTML='';
-  state.customers.forEach(c=>{
-    const d=document.createElement('div');d.className='item';
-    d.innerHTML=`<div class="txt"><b>${esc(c.name)}</b> ${c.stage?'<span class="tag work">'+esc(c.stage)+'</span>':''}
-      <input type="text" value="${esc(c.note||'')}" placeholder="下一步 / 需求"></div><button class="del">×</button>`;
-    d.querySelector('input').oninput=e=>{c.note=e.target.value;save();};
-    d.querySelector('.del').onclick=()=>{state.customers=state.customers.filter(x=>x.id!=c.id);save();renderCustomers();};
-    el.appendChild(d);
+  const {g,ds}=groupByDate(state.customers);
+  const show=custOpen?ds:ds.slice(0,1);
+  show.forEach(d=>{
+    const dv=document.createElement('div');dv.className='note-date';dv.textContent=dayLabel(d);
+    el.appendChild(dv);
+    g[d].slice().sort(byNew).forEach(c=>{
+      const it=document.createElement('div');it.className='item';
+      const up=(c.updTs&&(!c.ts||c.updTs-c.ts>60000))?' · 改于 '+stamp({ts:c.updTs}):'';
+      it.innerHTML=`<div class="txt">
+        <span class="stamp${c.ts?'':' old'}">🕘 ${c.ts?hhmm(c.ts):'更早'} 建档${up}</span>
+        <div style="margin-top:3px"><b>${esc(c.name)}</b>${c.stage?' <span class="tag work">'+esc(c.stage)+'</span>':''}</div>
+        <input type="text" value="${esc(c.note||'')}" placeholder="下一步 / 需求"></div><button class="del">×</button>`;
+      it.querySelector('input').oninput=e=>{c.note=e.target.value;c.updTs=Date.now();save();};
+      it.querySelector('.del').onclick=()=>{state.customers=state.customers.filter(x=>x.id!=c.id);save();renderCustomers();};
+      el.appendChild(it);
+    });
   });
+  if(ds.length>1){
+    const rest=ds.slice(1).reduce((n,d)=>n+g[d].length,0);
+    const b=document.createElement('button');b.className='fold';
+    b.textContent=custOpen?'收起早前记录 ▴':'展开更早的 '+rest+' 条（共 '+(ds.length-1)+' 天）▾';
+    b.onclick=()=>{custOpen=!custOpen;renderCustomers();};
+    el.appendChild(b);
+  }
 }
 function renderNotes(){
   const el=document.getElementById('noteList');
   if(!state.notes.length){el.innerHTML='<div class="empty">还没有随记，想到啥随手记一笔</div>';return;}
   el.innerHTML='';
-  const groups={};
-  state.notes.forEach(n=>{const d=n.date||dateOf(n.ts);(groups[d]||(groups[d]=[])).push(n);});
-  const dates=Object.keys(groups).sort().reverse();
+  const {g:groups,ds:dates}=groupByDate(state.notes.map(n=>Object.assign({},n,{date:n.date||dateOf(n.ts)})));
   dates.forEach(d=>{
     const dv=document.createElement('div');dv.className='note-date';
-    dv.textContent=d===todayStr()?'今天':(d===yesterdayStr()?'昨天':d);
+    dv.textContent=dayLabel(d)+'（'+groups[d].length+' 条）';
     el.appendChild(dv);
-    groups[d].sort((a,b)=>b.ts-a.ts).forEach(n=>{
+    groups[d].sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(n=>{
       const item=document.createElement('div');item.className='item';
-      const t=new Date(n.ts);
-      const ts=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-      item.innerHTML=`<div class="txt"><span class="note-time">${ts}</span><div class="note-text">${esc(n.text)}</div></div><button class="del">×</button>`;
+      const ts=n.ts?hhmm(n.ts):'更早';
+      item.innerHTML=`<div class="txt"><span class="stamp${n.ts?'':' old'}">🕘 ${ts}</span><div class="note-text">${esc(n.text)}</div></div><button class="del">×</button>`;
       item.querySelector('.del').onclick=()=>{state.notes=state.notes.filter(x=>x.id!=n.id);save();renderNotes();};
       el.appendChild(item);
     });
@@ -613,16 +735,19 @@ document.getElementById('top3Add').onclick=()=>{
   if(state.top3.length>=3){toast('最多 3 个，先勾掉或删一个');return;}
   const type=document.getElementById('top3Type').value;
   const inp=document.getElementById('top3Input');const v=inp.value.trim();if(!v)return;
-  state.top3.push({id:uid(),type,text:v,done:false});inp.value='';save();renderTop3();renderAdvice();
+  state.top3.push({id:uid(),type,text:v,done:false,ts:Date.now(),date:todayStr(),doneTs:null});
+  inp.value='';save();renderTop3();renderAdvice();
 };
 document.getElementById('taskAdd').onclick=()=>{
   const cat=document.getElementById('taskCat').value;
   const inp=document.getElementById('taskInput');const v=inp.value.trim();if(!v)return;
-  state.tasks.push({id:uid(),cat,text:v,done:false,date:todayStr()});inp.value='';save();renderTasks();
+  state.tasks.push({id:uid(),cat,text:v,done:false,ts:Date.now(),date:todayStr(),doneTs:null});
+  inp.value='';save();renderTasks();
 };
 document.getElementById('custAdd').onclick=()=>{
   const inp=document.getElementById('custName');const v=inp.value.trim();if(!v)return;
-  state.customers.push({id:uid(),name:v,stage:'',note:''});inp.value='';save();renderCustomers();
+  state.customers.push({id:uid(),name:v,stage:'',note:'',ts:Date.now(),date:todayStr(),updTs:null});
+  inp.value='';save();renderCustomers();
 };
 document.getElementById('noteAdd').onclick=()=>{
   const inp=document.getElementById('noteInput');const v=inp.value.trim();if(!v)return;
@@ -758,8 +883,7 @@ function applyRemote(remote){
   const localToken=state.githubToken, localAuto=state.autoSync, localGid=state.gistId;   // 本机私有设置不被覆盖
   state=Object.assign({},DEFAULT,remote);
   state.githubToken=localToken; state.autoSync=localAuto; state.gistId=localGid;
-  if(Array.isArray(state.notes)) state.notes.forEach(n=>{ if(!n.date) n.date=dateOf(n.ts||Date.now()); });
-  if(Array.isArray(state.tasks)) state.tasks.forEach(t=>{ if(!t.date) t.date=todayStr(); });
+  migrate(state);                                        // 云端老数据同样补齐时间字段
   state.syncedAt=Date.now(); saveLocal();
   if(state.lastResetDate!==todayStr()) resetDaily();
   renderAll(); syncing=false; refreshBadge();
