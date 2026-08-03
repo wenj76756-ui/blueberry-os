@@ -161,6 +161,9 @@
   .note-time{font-size:11px;color:var(--faint)}
   .note-text{margin-top:2px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
   textarea#noteInput{flex:1;resize:vertical;min-height:46px;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)}
+  .note-date{font-size:12px;font-weight:600;color:var(--sub);margin:16px 0 4px;padding-left:2px}
+  .note-date:first-child{margin-top:2px}
+  .data-view{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;color:var(--ink);background:#FBFCFD;border:1px solid var(--line);border-radius:12px;padding:14px;max-height:58vh;overflow:auto;word-break:break-word}
 </style>
 </head>
 <body>
@@ -291,6 +294,17 @@
       </div>
     </section>
 
+    <section class="sec" id="sec-data">
+      <div class="card">
+        <div class="card-h"><h3>📤 数据视图 · 给 AI / 复盘</h3><span class="hint">按日期分组</span></div>
+        <p class="tip" style="margin:0 0 12px">这里把所有内容按 <b>YYYY-MM-DD</b> 分组：旧记录带明确日期，绝不会混成今天。复制整段粘给 AI，它就能按时间线读懂你的记录。</p>
+        <pre class="data-view" id="dataView"></pre>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-primary" id="copyDataBtn">复制全部</button>
+        </div>
+      </div>
+    </section>
+
     <!-- 同步 -->
     <section class="sec" id="sec-sync">
       <div class="card">
@@ -358,6 +372,7 @@
     <button data-tab="life"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-7 5-13 14-14-1 9-7 14-14 14z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></span>生活</button>
     <button data-tab="customers"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.9"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.9"/></svg></span>客户</button>
     <button data-tab="notes"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>随记</button>
+    <button data-tab="data"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.9"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></span>数据</button>
     <button data-tab="sync"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 0 0-14-4M4 13a8 8 0 0 0 14 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M4 4v4h4M20 20v-4h-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>同步</button>
   </nav>
 </div>
@@ -372,6 +387,11 @@ const MOODS=['好','平静','普通','累','焦虑'];
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function nowHour(){return new Date().getHours();}
+function yesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dateOf(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function hhmm(ts){const t=new Date(ts);return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
+function typeLabel(t){return t=='work'?'工作':t=='growth'?'成长':'生活';}
+function accName(a){return a=='industry'?'行业认知':a=='sales'?'销售能力':a=='english'?'英语资产':'身体情绪';}
 
 const DEFAULT={
   updatedAt:Date.now(), gistId:null, githubToken:null, syncedAt:null, autoSync:true, lastResetDate:todayStr(),
@@ -395,6 +415,8 @@ function load(){
       const st=Object.assign({},DEFAULT,s);
       if(!Array.isArray(st.history))st.history=[];
       if(!Array.isArray(st.notes))st.notes=[];
+      if(Array.isArray(st.notes)) st.notes.forEach(n=>{ if(!n.date) n.date=dateOf(n.ts||Date.now()); });
+      if(Array.isArray(st.tasks)) st.tasks.forEach(t=>{ if(!t.date) t.date=todayStr(); });
       return st;
     }
   }catch(e){}
@@ -454,6 +476,7 @@ function renderAll(){
   renderLife();
   renderCustomers();
   renderNotes();
+  renderDataView();
   renderSync();
   renderTrend();
 }
@@ -565,14 +588,68 @@ function renderNotes(){
   const el=document.getElementById('noteList');
   if(!state.notes.length){el.innerHTML='<div class="empty">还没有随记，想到啥随手记一笔</div>';return;}
   el.innerHTML='';
-  state.notes.slice().reverse().forEach(n=>{
-    const d=document.createElement('div');d.className='item';
-    const t=new Date(n.ts);
-    const ts=(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-    d.innerHTML=`<div class="txt"><span class="note-time">${ts}</span><div class="note-text">${esc(n.text)}</div></div><button class="del">×</button>`;
-    d.querySelector('.del').onclick=()=>{state.notes=state.notes.filter(x=>x.id!=n.id);save();renderNotes();};
-    el.appendChild(d);
+  const groups={};
+  state.notes.forEach(n=>{const d=n.date||dateOf(n.ts);(groups[d]||(groups[d]=[])).push(n);});
+  const dates=Object.keys(groups).sort().reverse();
+  dates.forEach(d=>{
+    const dv=document.createElement('div');dv.className='note-date';
+    dv.textContent=d===todayStr()?'今天':(d===yesterdayStr()?'昨天':d);
+    el.appendChild(dv);
+    groups[d].sort((a,b)=>b.ts-a.ts).forEach(n=>{
+      const item=document.createElement('div');item.className='item';
+      const t=new Date(n.ts);
+      const ts=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+      item.innerHTML=`<div class="txt"><span class="note-time">${ts}</span><div class="note-text">${esc(n.text)}</div></div><button class="del">×</button>`;
+      item.querySelector('.del').onclick=()=>{state.notes=state.notes.filter(x=>x.id!=n.id);save();renderNotes();};
+      el.appendChild(item);
+    });
   });
+}
+function renderDataView(){
+  const el=document.getElementById('dataView'); if(!el)return;
+  const map={};
+  const ensure=d=>map[d]||(map[d]={keyword:'',top3:[],journal:{},life:{},notes:[],tasks:[]});
+  ensure(state.today.date);
+  map[state.today.date].keyword=state.today.keyword;
+  map[state.today.date].top3=state.top3;
+  map[state.today.date].journal=state.journal;
+  map[state.today.date].life=state.life;
+  (state.history||[]).forEach(h=>{
+    const m=ensure(h.date);
+    if(!m.keyword&&h.keyword) m.keyword=h.keyword;
+    if(!m.top3.length&&h.top3) m.top3=h.top3;
+    if((!m.journal.done)&&h.journal) m.journal=h.journal;
+    if(!m.life.bed&&h.life) m.life=h.life;
+  });
+  state.notes.forEach(n=>{const d=n.date||dateOf(n.ts);ensure(d).notes.push(n);});
+  state.tasks.forEach(t=>{const d=t.date||todayStr();ensure(d).tasks.push(t);});
+  const dates=Object.keys(map).sort().reverse();
+  let out='蓝莓 OS 数据导出 · 生成于 '+new Date().toLocaleString('zh-CN')+'\n（每日内容按日期分组，旧记录带明确日期，不会混为今天）\n';
+  dates.forEach(d=>{
+    const m=map[d]; const isToday=d===todayStr();
+    out+='\n【'+d+(isToday?' · 今天':'')+'】\n';
+    if(m.keyword) out+='关键词：'+m.keyword+'\n';
+    if(m.top3&&m.top3.length){out+='Top3行动：\n';m.top3.forEach(t=>{out+='  · ['+typeLabel(t.type)+'] '+t.text+(t.done?' ✓':'')+'\n';});}
+    if(m.journal&&(m.journal.done||m.journal.evidence||m.journal.tomorrow)){
+      out+='日记：\n';
+      if(m.journal.done) out+='  完成：'+m.journal.done+'\n';
+      if(m.journal.evidence) out+='  证据：'+m.journal.evidence+'\n';
+      if(m.journal.tomorrow) out+='  明日：'+m.journal.tomorrow+'\n';
+    }
+    if(m.tasks&&m.tasks.length){out+='任务：\n';m.tasks.forEach(t=>{out+='  · ['+typeLabel(t.cat)+'] '+t.text+(t.done?' ✓':'')+'\n';});}
+    if(m.notes.length){out+='随记：\n';m.notes.sort((a,b)=>a.ts-b.ts).forEach(n=>{out+='  · '+hhmm(n.ts)+' '+n.text+'\n';});}
+  });
+  if(state.customers.length){
+    out+='\n【客户库】\n';
+    state.customers.forEach(c=>{out+='  · '+c.name+(c.stage?' ['+c.stage+']':'')+(c.note?'：'+c.note:'')+'\n';});
+  }
+  const accs=state.accounts; let accOut='';
+  ['industry','sales','english','body'].forEach(a=>{
+    if(accs[a]&&accs[a].length){accOut+='  '+accName(a)+'：\n'+accs[a].map(e=>'    - '+e).join('\n')+'\n';}
+  });
+  if(accOut) out+='\n【复利账户 · 累计（无单条日期）】\n'+accOut;
+  el.textContent=out;
+  el._raw=out;
 }
 function renderSync(){
   const hasToken=!!state.githubToken;
@@ -601,7 +678,7 @@ document.getElementById('top3Add').onclick=()=>{
 document.getElementById('taskAdd').onclick=()=>{
   const cat=document.getElementById('taskCat').value;
   const inp=document.getElementById('taskInput');const v=inp.value.trim();if(!v)return;
-  state.tasks.push({id:uid(),cat,text:v,done:false});inp.value='';save();renderTasks();
+  state.tasks.push({id:uid(),cat,text:v,done:false,date:todayStr()});inp.value='';save();renderTasks();
 };
 document.getElementById('custAdd').onclick=()=>{
   const inp=document.getElementById('custName');const v=inp.value.trim();if(!v)return;
@@ -609,7 +686,7 @@ document.getElementById('custAdd').onclick=()=>{
 };
 document.getElementById('noteAdd').onclick=()=>{
   const inp=document.getElementById('noteInput');const v=inp.value.trim();if(!v)return;
-  state.notes.push({id:uid(),text:v,ts:Date.now()});inp.value='';save();renderNotes();
+  state.notes.push({id:uid(),text:v,ts:Date.now(),date:todayStr()});inp.value='';save();renderNotes();
 };
 document.getElementById('noteInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('noteAdd').click();}
@@ -763,6 +840,10 @@ document.getElementById('exportBtn').onclick=()=>{
   const s=JSON.parse(JSON.stringify(state)); delete s.githubToken;   // 导出也不带 token
   const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='蓝莓OS-'+todayStr()+'.json';a.click();
+};
+document.getElementById('copyDataBtn').onclick=()=>{
+  const el=document.getElementById('dataView'); if(!el||!el._raw){toast('暂无可复制内容');return;}
+  navigator.clipboard.writeText(el._raw).then(()=>toast('已复制全部数据 ✓ 直接粘给 AI')).catch(()=>toast('复制失败，请长按选择文本'));
 };
 document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
 document.getElementById('importFile').onchange=e=>{
