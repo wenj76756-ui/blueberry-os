@@ -357,6 +357,30 @@
         <p class="tip" style="margin:12px 0 0">开着自动同步就<b>不用碰这两个按钮</b>，它们只是兜底。<br>换新手机 / 新电脑：只需填一次同一个 Token + 粘贴仓库 ID，之后永久自动。</p>
       </div>
       <div class="card">
+        <div class="card-h"><h3>🔐 数据加密</h3><span class="hint" id="cryptoHint">未加密</span></div>
+        <div class="stat"><span>云端状态</span><b id="cryptoState">未加密 · 拿到链接即可读</b></div>
+        <p class="tip" style="margin:10px 0 12px">设一个口令后，数据<b>先加密再上传</b>。别人就算拿到仓库链接，看到的也只是乱码。口令<b>只存本机、绝不上传</b>。</p>
+
+        <div id="passBox">
+          <label class="lbl" id="passLbl">设置数据口令（建议 6 位以上）</label>
+          <div class="row">
+            <input type="password" id="passInput" class="inp" placeholder="自己好记、别人猜不到" autocomplete="off">
+            <button class="btn btn-primary" id="savePassBtn" style="white-space:nowrap">启用</button>
+          </div>
+        </div>
+
+        <div class="row" id="passOffRow" style="margin-top:8px;display:none">
+          <button class="btn btn-ghost" id="removePassBtn" style="font-size:12px;padding:7px 12px">移除加密</button>
+          <button class="btn btn-ghost" id="changePassBtn" style="font-size:12px;padding:7px 12px">更换口令</button>
+        </div>
+
+        <p class="tip" style="margin:12px 0 0;color:#B45309">
+          ⚠️ <b>口令忘了就再也解不开云端数据</b>（这是加密的代价，我也救不回来）。所以：<br>
+          ① 启用时会自动帮你导出一份<b>明文备份</b>到本机，存好别删；<br>
+          ② <b>手机和电脑要输同一个口令</b>，否则那台设备打不开数据（会自动锁住上传，不会冲掉你的数据）。
+        </p>
+      </div>
+      <div class="card">
         <div class="card-h"><h3>备份兜底</h3></div>
         <div class="row">
           <button class="btn btn-ghost" id="exportBtn">导出 JSON</button>
@@ -726,6 +750,7 @@ function renderSync(){
   if(tg) tg.className='toggle'+(state.autoSync?' on':'');
   const hint=document.getElementById('syncModeHint');
   if(hint) hint.textContent=state.autoSync?'自动':'手动';
+  renderCrypto();
   refreshBadge();
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -797,6 +822,7 @@ function setBadge(s,txt){
   b.dataset.s=s; document.getElementById('synBadgeText').textContent=txt;
 }
 function refreshBadge(){
+  if(cryptoLocked){setBadge('err','🔒 需要数据口令');return;}
   if(!state.githubToken){setBadge('off','未开启同步');return;}
   if(!state.autoSync){setBadge('off','自动同步已关');return;}
   if(syncing){setBadge('syncing','同步中…');return;}
@@ -808,6 +834,7 @@ function refreshBadge(){
 }
 function scheduleAutoPush(){
   if(!state.autoSync||!state.githubToken) return;      // 没开/没配就不管
+  if(cryptoLocked){ setBadge('err','🔒 需要数据口令'); return; }   // 未解锁不排上传
   clearTimeout(autoTimer);
   autoTimer=setTimeout(()=>{autoTimer=null;pushSync(true);},2000);
   refreshBadge();
@@ -816,6 +843,67 @@ function cleanForCloud(){
   const s=JSON.parse(JSON.stringify(state));
   delete s.githubToken;            // 绝不上传到云端
   return s;
+}
+/* ---------- 数据加密 · AES-GCM 256 + PBKDF2（浏览器原生，无外部依赖）----------
+   口令独立存 localStorage，绝不进 state ⇒ 从根上不可能被同步带上云。
+   信封外只留 updatedAt / 条数（明文），供「空不覆盖满」安全判断使用。 */
+const PASS_KEY='personalOS_pass', SALT_KEY='personalOS_salt', KDF_ITER=200000;
+let cryptoLocked=false;                       // 云端已加密但本机解不开 → 禁止一切上传
+let _kc={pass:null,salt:null,key:null};       // 派生密钥缓存（PBKDF2 很慢，只算一次）
+
+function getPass(){ try{return localStorage.getItem(PASS_KEY)||'';}catch(e){return '';} }
+function setPass(p){
+  try{ p?localStorage.setItem(PASS_KEY,p):localStorage.removeItem(PASS_KEY); }catch(e){}
+  _kc={pass:null,salt:null,key:null};
+}
+function hasCrypto(){ return !!(window.crypto&&window.crypto.subtle&&window.TextEncoder); }
+function b64(buf){                              // 分块转换，避免大数据 spread 爆栈
+  const u=new Uint8Array(buf); let s='';
+  for(let i=0;i<u.length;i+=0x8000) s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));
+  return btoa(s);
+}
+function unb64(s){ return Uint8Array.from(atob(s),c=>c.charCodeAt(0)); }
+function mySalt(){
+  let s=null; try{s=localStorage.getItem(SALT_KEY);}catch(e){}
+  if(!s){ s=b64(crypto.getRandomValues(new Uint8Array(16))); try{localStorage.setItem(SALT_KEY,s);}catch(e){} }
+  return s;
+}
+async function deriveKey(pass,saltB64){
+  if(_kc.key&&_kc.pass===pass&&_kc.salt===saltB64) return _kc.key;
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey(
+    {name:'PBKDF2',salt:unb64(saltB64),iterations:KDF_ITER,hash:'SHA-256'},
+    base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  _kc={pass,salt:saltB64,key}; return key;
+}
+/* 明文对象 → 上传内容（有口令则加密，无口令保持明文，向后兼容） */
+async function sealForCloud(obj){
+  const pass=getPass(), plain=JSON.stringify(obj);
+  if(!pass||!hasCrypto()) return plain;
+  const salt=mySalt(), key=await deriveKey(pass,salt);
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(plain));
+  return JSON.stringify({
+    __enc:'aes-gcm-256', v:1, kdf:'pbkdf2-sha256', iter:KDF_ITER,
+    salt, iv:b64(iv), data:b64(ct),
+    updatedAt:obj.updatedAt||Date.now(),                     // 明文：冲突仲裁必需
+    n:(obj.notes||[]).length, t:(obj.tasks||[]).length,      // 明文：防「空覆盖满」必需
+    note:'内容已加密。updatedAt/n/t 为同步判断所需的元信息，不含任何记录内容。'
+  });
+}
+/* 云端内容 → 明文对象  ⇒ {ok, data} 或 {ok:false, reason} */
+async function openFromCloud(text){
+  let raw; try{ raw=JSON.parse(text); }catch(e){ return {ok:false,reason:'bad'}; }
+  if(!raw||!raw.__enc) return {ok:true,data:raw};             // 明文老数据，直接用
+  if(!hasCrypto()) return {ok:false,reason:'nocrypto'};
+  const pass=getPass();
+  if(!pass) return {ok:false,reason:'nopass'};
+  try{
+    const key=await deriveKey(pass,raw.salt);
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},key,unb64(raw.data));
+    try{ localStorage.setItem(SALT_KEY,raw.salt); }catch(e){}   // 与云端对齐，令各设备密钥缓存生效
+    return {ok:true,data:JSON.parse(new TextDecoder().decode(pt))};
+  }catch(e){ return {ok:false,reason:'wrongpass'}; }
 }
 async function ghReq(path, method, body){
   const headers={'Accept':'application/vnd.github+json','Authorization':'Bearer '+state.githubToken,'X-GitHub-Api-Version':'2022-11-28'};
@@ -826,6 +914,10 @@ async function ghReq(path, method, body){
 }
 async function pushSync(silent){
   if(!state.githubToken){ if(!silent)toast('请先在同步页保存 GitHub Token'); return; }
+  if(cryptoLocked){                                     // 云端加密未解开 → 绝不上传，防覆盖
+    if(!silent) toast('🔒 云端数据已加密且口令未解开，已停止上传以保护数据');
+    setBadge('err','🔒 需要数据口令'); return;
+  }
   const lc=(state.notes?.length||0)+(state.tasks?.length||0);
   const localEmpty = lc===0 && !state.today.keyword && !state.top3.length;
   if(state.gistId && localEmpty){                       // 绝不拿空覆盖已存在的云端仓库
@@ -836,7 +928,7 @@ async function pushSync(silent){
   syncing=true; refreshBadge();
   const isNew=!state.gistId;
   try{
-    const content=JSON.stringify(cleanForCloud());
+    const content=await sealForCloud(cleanForCloud());   // 设了口令则为密文
     if(isNew){
       const j=await ghReq('','POST',{description:'蓝莓OS 工作台数据',public:false,files:{[GIST_FILENAME]:{content}}});
       state.gistId=j.id;
@@ -862,7 +954,22 @@ async function pullSync(silent){
     const j=await ghReq(state.gistId,'GET');
     const file=j.files&&j.files[GIST_FILENAME];
     if(!file||!file.content){ syncing=false; refreshBadge(); if(!silent)toast('云端还没有数据'); return; }
-    const remote=JSON.parse(file.content);
+    let text=file.content;
+    if(file.truncated&&file.raw_url) text=await (await fetch(file.raw_url)).text();   // 超大文件兜底
+    const opened=await openFromCloud(text);
+    if(!opened.ok){                                     // 解不开 → 锁死上传，绝不覆盖云端
+      syncing=false;
+      if(opened.reason==='nopass'||opened.reason==='wrongpass'||opened.reason==='nocrypto'){
+        cryptoLocked=true; clearTimeout(autoTimer); autoTimer=null;
+        setBadge('err','🔒 需要数据口令'); renderSync();
+        toast(opened.reason==='wrongpass'?'口令不正确 · 已停止同步以保护云端数据'
+             :opened.reason==='nocrypto'?'此浏览器不支持解密，请用新版浏览器打开'
+             :'🔒 云端数据已加密，请到同步页输入口令解锁');
+      }else{ refreshBadge(); if(!silent)toast('云端数据无法解析'); }
+      return;
+    }
+    cryptoLocked=false;
+    const remote=opened.data;
     lastPullAt=Date.now();
     // 安全铁律：绝不拿「空 / 更少」的本地覆盖「更全」的云端
     const localCount=(state.notes?.length||0)+(state.tasks?.length||0);
@@ -914,10 +1021,69 @@ window.addEventListener('beforeunload',()=>{
   if(autoTimer&&state.autoSync&&state.githubToken){ clearTimeout(autoTimer); autoTimer=null; pushSync(true); }
 });
 setInterval(refreshBadge,60000);
-document.getElementById('exportBtn').onclick=()=>{
+function doExport(tag){
   const s=JSON.parse(JSON.stringify(state)); delete s.githubToken;   // 导出也不带 token
   const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='蓝莓OS-'+todayStr()+'.json';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='蓝莓OS'+(tag?'-'+tag:'')+'-'+todayStr()+'.json';a.click();
+}
+document.getElementById('exportBtn').onclick=()=>doExport('');
+
+/* ---------- 加密开关 ---------- */
+function renderCrypto(){
+  const on=!!getPass();
+  const hint=document.getElementById('cryptoHint'), st=document.getElementById('cryptoState');
+  const box=document.getElementById('passBox'), off=document.getElementById('passOffRow');
+  const lbl=document.getElementById('passLbl'), btn=document.getElementById('savePassBtn');
+  if(!hint)return;
+  if(cryptoLocked){
+    hint.textContent='待解锁';
+    st.textContent='🔒 云端已加密 · 本机需输入口令';
+    box.style.display='block'; off.style.display='none';
+    lbl.textContent='输入口令解锁（与其他设备一致）'; btn.textContent='解锁';
+  }else if(on){
+    hint.textContent='已加密';
+    st.textContent='🔒 已加密 · 别人拿到链接也是乱码';
+    box.style.display='none'; off.style.display='flex';
+  }else{
+    hint.textContent='未加密';
+    st.textContent='未加密 · 拿到链接即可读';
+    box.style.display='block'; off.style.display='none';
+    lbl.textContent='设置数据口令（建议 6 位以上）'; btn.textContent='启用';
+  }
+}
+document.getElementById('savePassBtn').onclick=async()=>{
+  const inp=document.getElementById('passInput'), v=inp.value;
+  if(!v||v.length<4){ toast('口令至少 4 位'); return; }
+  if(!hasCrypto()){ toast('当前浏览器不支持加密，请用新版 Chrome / Safari'); return; }
+  const unlocking=cryptoLocked;
+  if(unlocking){                                        // 场景①：解锁其他设备加密过的数据
+    setPass(v); inp.value=''; cryptoLocked=false;
+    toast('正在用口令解锁云端数据…'); await pullSync(false);
+    if(cryptoLocked){ setPass(''); toast('口令不对，已还原（数据没动）'); }
+    renderCrypto(); renderSync(); return;
+  }
+  if(!confirm('启用加密前会先帮你导出一份明文备份到本机（防口令丢失）。\n\n口令一旦忘记，云端数据将无法恢复。确定启用？')) return;
+  doExport('加密前备份');                                 // 场景②：首次启用 → 先兜底备份
+  setPass(v); inp.value='';
+  renderCrypto();
+  toast('口令已设置 · 正在加密上传…');
+  await pushSync(false);
+  renderCrypto(); renderSync();
+};
+document.getElementById('changePassBtn').onclick=()=>{
+  const box=document.getElementById('passBox');
+  box.style.display='block';
+  document.getElementById('passLbl').textContent='输入新口令（其他设备也要同步改）';
+  document.getElementById('savePassBtn').textContent='更换';
+  document.getElementById('passInput').focus();
+};
+document.getElementById('removePassBtn').onclick=async()=>{
+  if(!confirm('移除加密后，数据将以明文存回云端。\n任何拿到仓库链接的人都能直接读到你的客户信息。\n\n确定移除？')) return;
+  setPass(''); renderCrypto();
+  toast('加密已移除 · 正在以明文上传…');
+  await pushSync(false);
+  renderCrypto(); renderSync();
 };
 document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
 document.getElementById('importFile').onchange=e=>{
