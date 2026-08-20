@@ -85,6 +85,30 @@
   .addline{display:flex;gap:8px;margin-top:12px}
   .addline input{flex:1}
   .addline select{flex:0 0 88px;background:#FBFCFD}
+  /* 客户跟进表格 */
+  .follow-add{margin-top:4px}
+  .follow-add #custName{flex:0 0 130px}
+  .follow-add #followContent{flex:1}
+  .follow-add .btn{flex:0 0 auto}
+  .cust-board{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .cust-board .cb{display:flex;flex-direction:column;gap:2px;background:#FBFCFD;border:1.5px solid var(--line);
+    border-radius:12px;padding:8px 12px;cursor:pointer;transition:.12s;min-width:104px}
+  .cust-board .cb:hover,.cust-board .cb.on{border-color:var(--blue);background:var(--blue-bg)}
+  .cust-board .cb b{font-size:14px;color:var(--ink);font-weight:600}
+  .cust-board .cb span{font-size:11px;color:var(--faint)}
+  .follow-bar{display:flex;align-items:center;gap:10px;margin:14px 0 10px}
+  .follow-bar .lbl-sm{font-size:13px;color:var(--sub);font-weight:500;margin:0}
+  .follow-bar select{flex:0 0 150px;width:auto}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px}
+  .tbl thead th{text-align:left;font-size:12px;color:var(--faint);font-weight:600;padding:10px 12px;
+    background:#FBFCFD;border-bottom:1px solid var(--line);white-space:nowrap}
+  .tbl tbody td{padding:11px 12px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink)}
+  .tbl tbody tr:first-child td{border-top:none}
+  .tbl .c-name{font-weight:600;white-space:nowrap;width:1%}
+  .tbl .c-time{color:var(--sub);white-space:nowrap;width:1%}
+  .tbl .c-content{color:var(--ink);min-width:160px}
+  .tbl .del{font-size:17px;padding:0 2px}
   .empty{color:var(--faint);font-size:14px;text-align:center;padding:16px 0}
   /* accounts */
   .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -291,9 +315,24 @@
     <!-- 客户 -->
     <section class="sec" id="sec-customers">
       <div class="card">
-        <div class="card-h"><h3>客户库</h3><span class="hint">按建档日期分组</span></div>
-        <div id="custList"></div>
-        <div class="addline"><input type="text" id="custName" placeholder="客户名"><button class="btn btn-ghost btn-sm" id="custAdd">+</button></div>
+        <div class="card-h"><h3>客户跟进</h3><span class="hint">按客户自由跟进 · 看进度</span></div>
+        <div class="addline follow-add">
+          <input type="text" id="custName" list="custNameList" placeholder="客户名（可下拉选已有）">
+          <datalist id="custNameList"></datalist>
+          <input type="text" id="followContent" placeholder="跟进内容…">
+          <button class="btn btn-primary btn-sm" id="followAdd">添加跟进</button>
+        </div>
+        <div id="custBoard" class="cust-board"></div>
+        <div class="follow-bar">
+          <label class="lbl-sm">筛选客户</label>
+          <select id="custFilter"><option value="">全部客户</option></select>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl follow-tbl">
+            <thead><tr><th class="c-name">客户名</th><th class="c-time">时间</th><th class="c-content">跟进内容</th><th></th></tr></thead>
+            <tbody id="followBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
     <section class="sec" id="sec-notes">
@@ -438,7 +477,15 @@ function migrate(st){
   if(!Array.isArray(st.top3))st.top3=[];
   st.top3.forEach(t=>{ if(!t.date) t.date=(st.today&&st.today.date)||todayStr(); });
   if(!Array.isArray(st.customers))st.customers=[];
-  st.customers.forEach(c=>{ if(!c.id)c.id=uid(); if(!c.date) c.date=c.ts?dateOf(c.ts):'更早'; });
+  st.customers.forEach(c=>{
+    if(!c.id)c.id=uid();
+    if(!c.date) c.date=c.ts?dateOf(c.ts):'更早';
+    if(!Array.isArray(c.followups))c.followups=[];
+    // 旧版单条 note 迁移为第一条跟进，保留历史不丢
+    if(c.note && c.note.trim() && c.followups.length===0){
+      c.followups.push({content:c.note, ts:c.ts||Date.now(), date:c.date});
+    }
+  });
   const src=(st.accounts&&typeof st.accounts==='object')?st.accounts:{};
   const na={};                                        // always new object → 不污染 DEFAULT
   ['industry','sales','english','body'].forEach(k=>{
@@ -689,35 +736,56 @@ function groupByDate(arr){
   if(g['更早'])ds.push('更早');
   return {g,ds};
 }
-let custOpen=false;
 function renderCustomers(){
-  const el=document.getElementById('custList');
-  if(!state.customers.length){el.innerHTML='<div class="empty">还没有客户记录</div>';return;}
-  el.innerHTML='';
-  const {g,ds}=groupByDate(state.customers);
-  const show=custOpen?ds:ds.slice(0,1);
-  show.forEach(d=>{
-    const dv=document.createElement('div');dv.className='note-date';dv.textContent=dayLabel(d);
-    el.appendChild(dv);
-    g[d].slice().sort(byNew).forEach(c=>{
-      const it=document.createElement('div');it.className='item';
-      const up=(c.updTs&&(!c.ts||c.updTs-c.ts>60000))?' · 改于 '+stamp({ts:c.updTs}):'';
-      it.innerHTML=`<div class="txt">
-        <span class="stamp${c.ts?'':' old'}">🕘 ${c.ts?hhmm(c.ts):'更早'} 建档${up}</span>
-        <div style="margin-top:3px"><b>${esc(c.name)}</b>${c.stage?' <span class="tag work">'+esc(c.stage)+'</span>':''}</div>
-        <input type="text" value="${esc(c.note||'')}" placeholder="下一步 / 需求"></div><button class="del">×</button>`;
-      it.querySelector('input').oninput=e=>{c.note=e.target.value;c.updTs=Date.now();save();};
-      it.querySelector('.del').onclick=()=>{state.customers=state.customers.filter(x=>x.id!=c.id);save();renderCustomers();};
-      el.appendChild(it);
+  const names=state.customers.map(c=>c.name).filter(Boolean);
+  // 1) 客户名下拉补全
+  document.getElementById('custNameList').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
+  // 2) 筛选下拉
+  const fsel=document.getElementById('custFilter');
+  const cur=fsel.value;
+  const uniq=[...new Set(names)];
+  fsel.innerHTML='<option value="">全部客户</option>'+uniq.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  fsel.value=uniq.includes(cur)?cur:'';
+  // 3) 进度看板（点 chip 即筛选该客户）
+  const board=document.getElementById('custBoard');
+  if(!state.customers.length){ board.innerHTML=''; }
+  else{
+    board.innerHTML=state.customers.map(c=>{
+      const n=c.followups.length;
+      const last=n?c.followups.reduce((a,b)=>b.ts>a.ts?b:a).ts:null;
+      const lastTxt=last?dayLabel(dateOf(last))+' '+hhmm(last):'暂无跟进';
+      const on=c.name===fsel.value?' on':'';
+      return `<div class="cb${on}" data-name="${esc(c.name)}"><b>${esc(c.name)}</b><span>${n}次 · ${lastTxt}</span></div>`;
+    }).join('');
+    board.querySelectorAll('.cb').forEach(b=>b.onclick=()=>{ fsel.value=b.dataset.name; renderCustomers(); });
+  }
+  // 4) 表格（拍平全部跟进，按时间倒序）
+  const body=document.getElementById('followBody');
+  const rows=[];
+  state.customers.forEach(c=>{
+    c.followups.forEach((f,i)=>{
+      if(fsel.value && c.name!==fsel.value) return;
+      rows.push({name:c.name, content:f.content, ts:f.ts, date:f.date, cid:c.id, fi:i});
     });
   });
-  if(ds.length>1){
-    const rest=ds.slice(1).reduce((n,d)=>n+g[d].length,0);
-    const b=document.createElement('button');b.className='fold';
-    b.textContent=custOpen?'收起早前记录 ▴':'展开更早的 '+rest+' 条（共 '+(ds.length-1)+' 天）▾';
-    b.onclick=()=>{custOpen=!custOpen;renderCustomers();};
-    el.appendChild(b);
-  }
+  rows.sort((a,b)=>b.ts-a.ts);
+  if(!rows.length){ body.innerHTML='<tr><td colspan="4"><div class="empty">还没有跟进记录，上面填一条试试</div></td></tr>'; return; }
+  body.innerHTML=rows.map(r=>{
+    const t=(r.date&&r.date!=='更早')?(dayLabel(r.date)+' '+hhmm(r.ts)):(r.ts?dayLabel(dateOf(r.ts))+' '+hhmm(r.ts):'更早');
+    return `<tr>
+      <td class="c-name">${esc(r.name)}</td>
+      <td class="c-time">${esc(t)}</td>
+      <td class="c-content">${esc(r.content||'')}</td>
+      <td><button class="del" data-cid="${r.cid}" data-fi="${r.fi}">×</button></td>
+    </tr>`;
+  }).join('');
+  body.querySelectorAll('.del').forEach(b=>{
+    b.onclick=()=>{
+      const c=state.customers.find(x=>x.id===b.dataset.cid); if(!c)return;
+      c.followups.splice(+b.dataset.fi,1);
+      save();renderCustomers();
+    };
+  });
 }
 function renderNotes(){
   const el=document.getElementById('noteList');
@@ -769,11 +837,21 @@ document.getElementById('taskAdd').onclick=()=>{
   state.tasks.push({id:uid(),cat,text:v,done:false,ts:Date.now(),date:todayStr(),doneTs:null});
   inp.value='';save();renderTasks();
 };
-document.getElementById('custAdd').onclick=()=>{
-  const inp=document.getElementById('custName');const v=inp.value.trim();if(!v)return;
-  state.customers.push({id:uid(),name:v,stage:'',note:'',ts:Date.now(),date:todayStr(),updTs:null});
-  inp.value='';save();renderCustomers();
+document.getElementById('followAdd').onclick=()=>{
+  const nm=document.getElementById('custName');const ct=document.getElementById('followContent');
+  const v=nm.value.trim();const c=ct.value.trim();
+  if(!v){nm.focus();return;}
+  if(!c){ct.focus();return;}
+  let cust=state.customers.find(x=>x.name.trim().toLowerCase()===v.toLowerCase());
+  if(!cust){cust={id:uid(),name:v,stage:'',note:'',followups:[],ts:Date.now(),date:todayStr(),updTs:null};state.customers.push(cust);}
+  cust.followups.push({content:c,ts:Date.now(),date:todayStr()});
+  ct.value='';                       // 保留客户名，方便连续跟进同一客户
+  save();renderCustomers();
 };
+document.getElementById('followContent').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();document.getElementById('followAdd').click();}
+});
+document.getElementById('custFilter').addEventListener('change',renderCustomers);
 document.getElementById('noteAdd').onclick=()=>{
   const inp=document.getElementById('noteInput');const v=inp.value.trim();if(!v)return;
   state.notes.push({id:uid(),text:v,ts:Date.now(),date:todayStr()});inp.value='';save();renderNotes();
