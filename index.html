@@ -201,6 +201,70 @@
   .acc .mini .m-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .acc .mini .m-t{font-size:10.5px;color:var(--faint);line-height:1.3}
   .card-h .hint.date{color:var(--blue-ink);background:var(--blue-bg);padding:3px 9px;border-radius:8px;font-weight:600}
+
+  /* ===== 随记 · 分类输入 ===== */
+  .pick-row{margin-top:12px}
+  .pick-lbl{font-size:12px;color:var(--sub);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .pick-lbl em{font-style:normal;font-weight:400;color:#C3C8D0;font-size:11px}
+  .chips.sm{gap:7px;margin-top:0}
+  .chips.sm .chip{padding:6px 12px;font-size:13px;border-radius:16px}
+  .chip.cat-work.on{background:var(--coral-bg);color:var(--coral);border-color:var(--coral)}
+  .chip.cat-life.on{background:var(--teal-bg);color:var(--teal);border-color:var(--teal)}
+  .chip.cat-growth.on{background:var(--blue-bg);color:var(--blue-ink);border-color:var(--blue)}
+  .chip.cat-other.on{background:#EEF0F4;color:#5F6368;border-color:#9AA0A6}
+  .chip.mood.on{background:#FFF0E4;color:#B9603A;border-color:#EFB07B}
+  .eff-row{display:flex;align-items:center;gap:10px}
+  .eff-row input[type=range]{flex:1;min-width:0;accent-color:var(--blue);height:22px}
+  .eff-val{font-size:13px;font-weight:600;color:var(--blue-ink);min-width:52px;text-align:right}
+  .eff-off{font-size:12px;color:var(--faint);cursor:pointer;border:1.5px solid var(--line);
+    background:#FBFCFD;border-radius:16px;padding:5px 11px;white-space:nowrap;font-family:inherit;transition:.12s}
+  .eff-off.on{background:#EEF0F4;color:#5F6368;border-color:#9AA0A6;font-weight:600}
+  .n-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  .n-tags .t{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:7px;background:#F1F3F6;color:var(--sub)}
+  .n-tags .t.cat{color:#fff}
+  .n-tags .t.eff{background:var(--blue-bg);color:var(--blue-ink)}
+  .n-tags .t.mood{background:#FFF0E4;color:#B9603A}
+
+  /* ===== 复盘 · 状态坐标轴 ===== */
+  .daynav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .daynav .dtitle{font-size:15px;font-weight:700;color:var(--ink);cursor:pointer}
+  .daynav .dtitle small{font-size:11px;color:var(--faint);font-weight:400;margin-left:5px}
+  .daynav .dbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 11px;
+    font-size:13px;color:var(--sub);cursor:pointer;font-family:inherit;transition:.12s}
+  .daynav .dbtn:active{background:var(--blue-bg)}
+  .tl-card{background:#FBFCFD;border:1px solid var(--line);border-radius:14px;padding:10px 6px 8px;margin-top:12px}
+  .tl-card svg{width:100%;height:auto;display:block}
+  .tl-cap{font-size:11px;color:var(--faint);text-align:center;margin-top:2px}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 11px;margin-top:9px;padding:0 4px}
+  .legend span{font-size:11px;color:var(--sub);display:inline-flex;align-items:center;gap:4px}
+  .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;flex:none}
+  .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .sumbox{background:#FBFCFD;border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+  .sumbox .k{font-size:11px;color:var(--faint);font-weight:600}
+  .sumbox .v{font-size:19px;font-weight:700;color:var(--ink);margin-top:3px;letter-spacing:-.4px}
+  .sumbox .s{font-size:11px;color:var(--faint);margin-top:2px;line-height:1.45}
+  .dist{margin-top:14px}
+  .dist-h{font-size:12px;font-weight:600;color:var(--sub);margin-bottom:2px}
+  .catbar{display:flex;height:11px;border-radius:6px;overflow:hidden;background:#EDEFF3;margin-top:6px}
+  .catbar div{height:100%}
+  .catbar-lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px}
+  .catbar-lg span{font-size:11px;color:var(--sub);display:inline-flex;align-items:center;gap:4px}
+  .catbar-lg i{width:9px;height:9px;border-radius:3px;display:inline-block;flex:none}
+  .moodbars{margin-top:8px}
+  .mbar{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .mbar .nm{font-size:12px;color:var(--sub);width:34px;flex:none}
+  .mbar .tr{flex:1;height:8px;background:#EDEFF3;border-radius:5px;overflow:hidden}
+  .mbar .fl{height:100%;border-radius:5px;background:#F0A860}
+  .mbar .ct{font-size:11px;color:var(--faint);width:22px;text-align:right;flex:none}
+  .rv-sum{margin-top:14px;background:var(--blue-bg);border-radius:13px;padding:12px 14px;
+    font-size:13.5px;color:var(--blue-ink);line-height:1.75}
+  .rv-group{margin-top:16px}
+  .rv-gh{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+  .rv-gh i{width:9px;height:9px;border-radius:3px;display:inline-block;flex:none}
+  .rv-line{font-size:13.5px;color:var(--ink);padding:8px 0;border-top:1px dashed var(--line);
+    line-height:1.55;display:flex;gap:9px;word-break:break-word}
+  .rv-line .t{font-size:11px;color:var(--faint);flex:none;padding-top:2px;min-width:38px}
+  .rv-line .mo{font-size:10.5px;color:#B9603A;flex:none}
 </style>
 </head>
 <body>
@@ -339,10 +403,39 @@
       <div class="card">
         <div class="card-h"><h3>随记 · 灵感速记</h3><span class="hint">随便想，随时记</span></div>
         <div class="addline">
-          <textarea id="noteInput" rows="2" placeholder="蹦出来的想法、碎片、灵感…记下来，不急着整理"></textarea>
+          <textarea id="noteInput" rows="2" placeholder="蹦出来的想法、碎片、灵感…记下来，不急着整理（可直接回车提交）"></textarea>
           <button class="btn btn-primary btn-sm" id="noteAdd">记一笔</button>
         </div>
+        <div class="pick-row">
+          <div class="pick-lbl">A · 类别 <em>单选，可不选</em></div>
+          <div class="chips sm" id="catPick"></div>
+        </div>
+        <div class="pick-row">
+          <div class="pick-lbl">B · 心情 <em>可多选，也可不选</em></div>
+          <div class="chips sm" id="moodPick"></div>
+        </div>
+        <div class="pick-row">
+          <div class="pick-lbl">C · 效率 <em>拉一下，不想评就点「不评」</em></div>
+          <div class="eff-row">
+            <input type="range" id="effRange" min="1" max="10" step="1" value="6">
+            <span class="eff-val" id="effVal">—</span>
+            <button class="eff-off on" id="effOff">不评</button>
+          </div>
+        </div>
         <div id="noteList" class="note-list"></div>
+      </div>
+    </section>
+
+    <!-- 复盘 -->
+    <section class="sec" id="sec-review">
+      <div class="card">
+        <div class="card-h"><h3>复盘 · 一天的状态轴</h3><span class="hint" id="rvCount"></span></div>
+        <div class="daynav">
+          <button class="dbtn" id="rvPrev">‹ 前一天</button>
+          <div class="dtitle" id="rvDate"></div>
+          <button class="dbtn" id="rvNext">后一天 ›</button>
+        </div>
+        <div id="rvBody"></div>
       </div>
     </section>
 
@@ -437,6 +530,7 @@
     <button data-tab="life"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-7 5-13 14-14-1 9-7 14-14 14z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></span>生活</button>
     <button data-tab="customers"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.9"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.9"/></svg></span>客户</button>
     <button data-tab="notes"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>随记</button>
+    <button data-tab="review"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7.5 15.5l3.5-4.5 3 2.5L20 7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>复盘</button>
     <button data-tab="sync"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 0 0-14-4M4 13a8 8 0 0 0 14 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M4 4v4h4M20 20v-4h-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>同步</button>
   </nav>
 </div>
@@ -447,6 +541,24 @@ const LS_KEY='personalOS_v1';
 const GH_API='https://api.github.com/gists';
 const GIST_FILENAME='blueberry-os-data.json';
 const MOODS=['好','平静','普通','累','焦虑'];
+/* ===== 随记分类体系：类别 / 心情 / 效率 ===== */
+const CATS=[
+  {k:'work',  n:'工作', c:'#EA6A3F'},
+  {k:'life',  n:'生活', c:'#1EA0A0'},
+  {k:'growth',n:'成长', c:'#1A73E8'},
+  {k:'other', n:'其他', c:'#9AA0A6'},
+  {k:'none',  n:'未归类', c:'#C3C8D0'}
+];
+const MOODTAGS=['快乐','愉悦','平静','焦虑','愤怒','低落','疲惫','兴奋'];
+const MOODSCORE={'快乐':5,'愉悦':4,'兴奋':4,'平静':3,'焦虑':2,'愤怒':2,'疲惫':2,'低落':1};
+function catOf(k){ return CATS.find(c=>c.k===(k||'none')) || CATS[4]; }
+function moodScore(list){
+  if(!Array.isArray(list)||!list.length)return null;
+  const s=list.reduce((a,m)=>a+(MOODSCORE[m]||3),0)/list.length;
+  return s;
+}
+/* 当前随记草稿：类别(单选) / 心情(多选) / 效率(null=不评) */
+let noteDraft={cat:null,moods:[],eff:null};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -471,7 +583,11 @@ function byNew(a,b){return (b.ts||0)-(a.ts||0);}
 /* 老数据一律补齐时间字段，只加不删 */
 function migrate(st){
   if(!Array.isArray(st.notes))st.notes=[];
-  st.notes.forEach(n=>{ if(!n.date) n.date=dateOf(n.ts||Date.now()); });
+  st.notes.forEach(n=>{
+    if(!n.date) n.date=dateOf(n.ts||Date.now());
+    if(!Array.isArray(n.moods)) n.moods=[];          // 老随记无心情标签
+    if(!('eff' in n)) n.eff=null;                    // 老随记未评效率
+  });
   if(!Array.isArray(st.tasks))st.tasks=[];
   st.tasks.forEach(t=>{ if(!t.id)t.id=uid(); if(!t.date) t.date=t.ts?dateOf(t.ts):'更早'; });
   if(!Array.isArray(st.top3))st.top3=[];
@@ -582,6 +698,8 @@ function renderAll(){
   renderLife();
   renderCustomers();
   renderNotes();
+  renderNotePick();
+  renderReview();
   renderSync();
   renderTrend();
 }
@@ -799,11 +917,191 @@ function renderNotes(){
     groups[d].sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(n=>{
       const item=document.createElement('div');item.className='item';
       const ts=n.ts?hhmm(n.ts):'更早';
-      item.innerHTML=`<div class="txt"><span class="stamp${n.ts?'':' old'}">🕘 ${ts}</span><div class="note-text">${esc(n.text)}</div></div><button class="del">×</button>`;
-      item.querySelector('.del').onclick=()=>{state.notes=state.notes.filter(x=>x.id!=n.id);save();renderNotes();};
+      const c=catOf(n.cat);
+      const tags=[];
+      if(n.cat) tags.push(`<span class="t cat" style="background:${c.c}">${c.n}</span>`);
+      (n.moods||[]).forEach(m=>tags.push(`<span class="t mood">${esc(m)}</span>`));
+      if(typeof n.eff==='number'&&n.eff>0) tags.push(`<span class="t eff">效率 ${n.eff}</span>`);
+      item.innerHTML=`<div class="txt"><span class="stamp${n.ts?'':' old'}">🕘 ${ts}</span>`
+        +`<div class="note-text">${esc(n.text)}</div>`
+        +(tags.length?`<div class="n-tags">${tags.join('')}</div>`:'')
+        +`</div><button class="del">×</button>`;
+      item.querySelector('.del').onclick=()=>{state.notes=state.notes.filter(x=>x.id!=n.id);save();renderNotes();renderReview();};
       el.appendChild(item);
     });
   });
+}
+/* ---------- 随记 · 分类输入 ---------- */
+function renderNotePick(){
+  const cp=document.getElementById('catPick'); if(!cp)return;
+  cp.innerHTML='';
+  CATS.filter(c=>c.k!=='none').forEach(c=>{
+    const s=document.createElement('span');
+    s.className='chip cat-'+c.k+(noteDraft.cat===c.k?' on':'');
+    s.textContent=c.n;
+    s.onclick=()=>{noteDraft.cat=(noteDraft.cat===c.k)?null:c.k;renderNotePick();};
+    cp.appendChild(s);
+  });
+  const mp=document.getElementById('moodPick'); mp.innerHTML='';
+  MOODTAGS.forEach(m=>{
+    const s=document.createElement('span');
+    s.className='chip mood'+(noteDraft.moods.indexOf(m)>=0?' on':'');
+    s.textContent=m;
+    s.onclick=()=>{const i=noteDraft.moods.indexOf(m); if(i>=0)noteDraft.moods.splice(i,1); else noteDraft.moods.push(m); renderNotePick();};
+    mp.appendChild(s);
+  });
+  const er=document.getElementById('effRange'),ev=document.getElementById('effVal'),eo=document.getElementById('effOff');
+  if(er&&!er._b){
+    er._b=1;
+    er.addEventListener('input',()=>{noteDraft.eff=+er.value;ev.textContent=er.value+' / 10';eo.classList.remove('on');});
+  }
+  if(eo) eo.onclick=()=>{noteDraft.eff=(noteDraft.eff===null)?+(er?er.value:6):null;renderNotePick();};
+  if(er&&document.activeElement!==er) er.value=noteDraft.eff||6;
+  if(ev) ev.textContent=noteDraft.eff?(noteDraft.eff+' / 10'):'—';
+  if(eo) eo.classList.toggle('on',noteDraft.eff===null);
+}
+
+/* ---------- 复盘 · 一天的状态坐标轴 ---------- */
+let rvDate=null;                                   // null = 今天
+function rvDateStr(){return rvDate||todayStr();}
+function shiftDate(d,n){
+  const p=String(d).split('-').map(Number);
+  const t=new Date(p[0],p[1]-1,p[2]+n);
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+/* 三轨图：上=心情曲线（纵轴情绪高低）· 中=效率柱 · 下=类别色条，横轴统一为时间 */
+function rvChartSVG(list){
+  const W=480,H=300,PL=30,PR=12,iw=W-PL-PR;
+  const hrs=list.map(n=>{const d=new Date(n.ts);return d.getHours()+d.getMinutes()/60;});
+  let h0=Math.floor(Math.min.apply(null,hrs)),h1=Math.ceil(Math.max.apply(null,hrs));
+  if(h1-h0<3){h0=Math.max(0,h0-1);h1=Math.min(24,h1+1);}
+  if(h1<=h0){h0=Math.max(0,h0-1);h1=Math.min(24,h0+1);}
+  const X=h=>PL+(h-h0)/(h1-h0)*iw;
+  const YM=s=>148-(s-1)/4*124;                     // 心情 1..5 → y 148..24
+  const E0=236,E1=180, YE=e=>E0-(e/10)*(E0-E1);    // 效率 0..10 → y 236..180
+  const CY=252,CH=12;                              // 类别轨
+  const p=[];
+  p.push(`<text x="${PL}" y="15" font-size="9" fill="#C3C8D0">心情</text>`);
+  p.push(`<text x="${PL}" y="177" font-size="9" fill="#C3C8D0">效率</text>`);
+  const step=(h1-h0)>12?2:1;
+  for(let h=Math.ceil(h0);h<=h1;h+=step){
+    const x=X(h);
+    p.push(`<line x1="${x.toFixed(1)}" y1="20" x2="${x.toFixed(1)}" y2="${CY+CH}" stroke="#E9ECF1" stroke-width="1"/>`);
+    p.push(`<text x="${x.toFixed(1)}" y="${CY+CH+18}" font-size="9.5" fill="#9AA0A6" text-anchor="middle">${h}点</text>`);
+  }
+  [[5,'快乐'],[4,'愉悦'],[3,'平静'],[2,'烦躁'],[1,'低落']].forEach(a=>{
+    p.push(`<text x="25" y="${(YM(a[0])+3.4).toFixed(1)}" font-size="9" fill="#B9BEC6" text-anchor="end">${a[1]}</text>`);
+  });
+  p.push(`<text x="25" y="${E1+8}" font-size="9" fill="#B9BEC6" text-anchor="end">10</text>`);
+  p.push(`<text x="25" y="${E0+3}" font-size="9" fill="#B9BEC6" text-anchor="end">0</text>`);
+  p.push(`<line x1="${PL}" y1="${E0}" x2="${W-PR}" y2="${E0}" stroke="#DDE2EA" stroke-width="1"/>`);
+  p.push(`<line x1="${PL}" y1="168" x2="${W-PR}" y2="168" stroke="#EEEFF3" stroke-width="1" stroke-dasharray="3 3"/>`);
+  const pts=list.map(n=>{
+    const d=new Date(n.ts);const h=d.getHours()+d.getMinutes()/60;
+    return {n:n,h:h,x:X(h),ms:moodScore(n.moods)};
+  });
+  const mp=pts.filter(o=>o.ms!==null);
+  if(mp.length>1){
+    p.push(`<polyline points="${mp.map(o=>o.x.toFixed(1)+','+YM(o.ms).toFixed(1)).join(' ')}" fill="none" stroke="#C9D5EA" stroke-width="1.6" stroke-dasharray="4 3"/>`);
+  }
+  mp.forEach(o=>{
+    const c=catOf(o.n.cat);
+    p.push(`<circle cx="${o.x.toFixed(1)}" cy="${YM(o.ms).toFixed(1)}" r="5.2" fill="${c.c}" stroke="#fff" stroke-width="1.6">`
+      +`<title>${hhmm(o.n.ts)} ${esc((o.n.moods||[]).join('/'))}</title></circle>`);
+  });
+  const ep=pts.filter(o=>typeof o.n.eff==='number'&&o.n.eff>0);
+  const bw=Math.max(5,Math.min(18,iw/Math.max(ep.length,1)*0.5));
+  ep.forEach(o=>{
+    const y=YE(o.n.eff);
+    p.push(`<rect x="${(o.x-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(E0-y).toFixed(1)}" rx="2.5" fill="#9FC3F5">`
+      +`<title>${hhmm(o.n.ts)} 效率 ${o.n.eff}</title></rect>`);
+  });
+  pts.forEach(o=>{
+    const c=catOf(o.n.cat);
+    p.push(`<rect x="${(o.x-2.5).toFixed(1)}" y="${CY}" width="5" height="${CH}" rx="2" fill="${c.c}" opacity=".85">`
+      +`<title>${hhmm(o.n.ts)} ${c.n}</title></rect>`);
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img">${p.join('')}</svg>`;
+}
+function renderReview(){
+  const body=document.getElementById('rvBody'); if(!body)return;
+  const dstr=rvDateStr();
+  const dt=document.getElementById('rvDate');
+  if(dt){
+    dt.innerHTML=esc(dayLabel(dstr))+(dstr===todayStr()?'':'<small>点我回今天</small>');
+    dt.onclick=()=>{rvDate=null;renderReview();};
+  }
+  const list=state.notes.filter(n=>(n.date||dateOf(n.ts))===dstr).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const cnt=document.getElementById('rvCount'); if(cnt) cnt.textContent=list.length?list.length+' 条':'';
+  if(!list.length){body.innerHTML='<div class="empty">这天还没有记录<br>去「随记」随手记一笔，这里会自动长出时间轴</div>';return;}
+
+  const byCat={}; CATS.forEach(c=>byCat[c.k]=0);
+  list.forEach(n=>byCat[n.cat||'none']++);
+  const moodCnt={};
+  list.forEach(n=>(n.moods||[]).forEach(m=>{moodCnt[m]=(moodCnt[m]||0)+1;}));
+  const effs=list.map(n=>(typeof n.eff==='number'&&n.eff>0)?n.eff:null).filter(x=>x!==null);
+  const effAvg=effs.length?effs.reduce((a,b)=>a+b,0)/effs.length:null;
+  const hourCnt={};
+  list.forEach(n=>{const h=new Date(n.ts).getHours();hourCnt[h]=(hourCnt[h]||0)+1;});
+  const peakHour=Object.keys(hourCnt).map(Number).sort((a,b)=>hourCnt[b]-hourCnt[a])[0];
+  const best=list.filter(n=>typeof n.eff==='number'&&n.eff>0).sort((a,b)=>b.eff-a.eff)[0];
+
+  /* 坐标轴 */
+  const legend=CATS.filter(c=>byCat[c.k]>0)
+    .map(c=>`<span><i style="background:${c.c}"></i>${c.n}</span>`).join('');
+  const chart=`<div class="tl-card">${rvChartSVG(list)}
+    <div class="tl-cap">上：心情高低（点=一条记录，颜色=类别）· 中：效率 · 下：类别</div>
+    <div class="legend">${legend}</div></div>`;
+
+  /* 四个数字 */
+  const spanTxt=list.length>1?(hhmm(list[0].ts)+'–'+hhmm(list[list.length-1].ts)):'单条记录';
+  const moodKeys=Object.keys(moodCnt).sort((a,b)=>moodCnt[b]-moodCnt[a]);
+  const sum=`<div class="sum-grid">
+    <div class="sumbox"><div class="k">记录条数</div><div class="v">${list.length}</div><div class="s">${spanTxt}</div></div>
+    <div class="sumbox"><div class="k">平均效率</div><div class="v">${effAvg!==null?effAvg.toFixed(1):'—'}</div><div class="s">${effs.length?effs.length+' 条评了分'+(best?' · 最高 '+best.eff:'') :'这天没评效率'}</div></div>
+    <div class="sumbox"><div class="k">主导心情</div><div class="v" style="font-size:16px">${moodKeys.length?esc(moodKeys[0]):'—'}</div><div class="s">${moodKeys.length?moodCnt[moodKeys[0]]+' 次'+(moodKeys[1]?' · 次位 '+esc(moodKeys[1]):''):'未标心情'}</div></div>
+    <div class="sumbox"><div class="k">最活跃时段</div><div class="v">${peakHour!=null?peakHour+' 点':'—'}</div><div class="s">${peakHour!=null?hourCnt[peakHour]+' 条记录在这段':'—'}</div></div>
+  </div>`;
+
+  /* 类别分布 + 心情分布 */
+  const segs=CATS.filter(c=>byCat[c.k]>0)
+    .map(c=>`<div style="width:${(byCat[c.k]/list.length*100).toFixed(2)}%;background:${c.c}"></div>`).join('');
+  const catlg=CATS.filter(c=>byCat[c.k]>0)
+    .map(c=>`<span><i style="background:${c.c}"></i>${c.n} ${byCat[c.k]}</span>`).join('');
+  const maxM=moodKeys.length?moodCnt[moodKeys[0]]:1;
+  const moodHtml=moodKeys.length?`<div class="dist"><div class="dist-h">心情出现次数</div><div class="moodbars">`
+    +moodKeys.map(m=>`<div class="mbar"><span class="nm">${esc(m)}</span>`
+      +`<span class="tr"><span class="fl" style="width:${(moodCnt[m]/maxM*100).toFixed(0)}%"></span></span>`
+      +`<span class="ct">${moodCnt[m]}</span></div>`).join('')
+    +`</div></div>`:'';
+  const dist=`<div class="dist"><div class="dist-h">类别占比</div><div class="catbar">${segs}</div>
+    <div class="catbar-lg">${catlg}</div></div>${moodHtml}`;
+
+  /* 一句话总结 */
+  const segTxt=CATS.filter(c=>byCat[c.k]>0).map(c=>c.n+' '+byCat[c.k]).join(' · ');
+  const s=[];
+  s.push(`这天记了 <b>${list.length}</b> 条：${segTxt}。`);
+  if(moodKeys.length){
+    const rest=moodKeys.slice(1);
+    s.push(`心情主要是「${esc(moodKeys[0])}」${moodCnt[moodKeys[0]]} 次${rest.length?'，还出现过 '+rest.map(esc).join('、'):''}。`);
+  }else s.push('这天的记录都没标心情。');
+  s.push(effAvg!==null
+    ? `效率平均 <b>${effAvg.toFixed(1)}</b>（${effs.length} 条评了）${best&&best.ts?'，'+hhmm(best.ts)+' 那笔最高 '+best.eff:''}。`
+    : '效率没打分，随手拉一下就能看到全天高低起伏。');
+  if(list.length>1) s.push(`${hhmm(list[0].ts)} 记到 ${hhmm(list[list.length-1].ts)}${peakHour!=null?'，'+peakHour+' 点前后记得最多':''}。`);
+  const summary=`<div class="rv-sum">${s.join('')}</div>`;
+
+  /* 归类清单 */
+  const groupsHtml=CATS.filter(c=>byCat[c.k]>0).map(c=>{
+    const items=list.filter(n=>(n.cat||'none')===c.k).map(n=>{
+      const mo=(n.moods||[]).length?` <span class="mo">${esc((n.moods||[]).join('/'))}</span>`:'';
+      const ef=(typeof n.eff==='number'&&n.eff>0)?` <span class="mo">⚡${n.eff}</span>`:'';
+      return `<div class="rv-line"><span class="t">${n.ts?hhmm(n.ts):'—'}</span><span>${esc(n.text)}${mo}${ef}</span></div>`;
+    }).join('');
+    return `<div class="rv-group"><div class="rv-gh"><i style="background:${c.c}"></i>${c.n} · ${byCat[c.k]} 条</div>${items}</div>`;
+  }).join('');
+
+  body.innerHTML=chart+sum+dist+summary+`<div class="dist-h" style="margin-top:16px">归类后的想法</div>`+groupsHtml;
 }
 function renderSync(){
   const hasToken=!!state.githubToken;
@@ -852,9 +1150,17 @@ document.getElementById('followContent').addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();document.getElementById('followAdd').click();}
 });
 document.getElementById('custFilter').addEventListener('change',renderCustomers);
+document.getElementById('rvPrev').onclick=()=>{rvDate=shiftDate(rvDateStr(),-1);renderReview();};
+document.getElementById('rvNext').onclick=()=>{rvDate=shiftDate(rvDateStr(),1);renderReview();};
 document.getElementById('noteAdd').onclick=()=>{
   const inp=document.getElementById('noteInput');const v=inp.value.trim();if(!v)return;
-  state.notes.push({id:uid(),text:v,ts:Date.now(),date:todayStr()});inp.value='';save();renderNotes();
+  state.notes.push({id:uid(),text:v,ts:Date.now(),date:todayStr(),
+    cat:noteDraft.cat||null, moods:noteDraft.moods.slice(),
+    eff:(noteDraft.eff===null?null:noteDraft.eff)});
+  inp.value='';
+  noteDraft={cat:noteDraft.cat,moods:[],eff:null};   // 类别保留，心情/效率重置
+  save();renderNotePick();renderNotes();renderReview();
+  toast(noteDraft.cat?'已记一笔':'已记一笔（未分类）');
 };
 document.getElementById('noteInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('noteAdd').click();}
