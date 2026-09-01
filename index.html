@@ -270,6 +270,53 @@
     line-height:1.55;display:flex;gap:9px;word-break:break-word}
   .rv-line .t{font-size:11px;color:var(--faint);flex:none;padding-top:2px;min-width:38px}
   .rv-line .mo{font-size:10.5px;color:#B9603A;flex:none}
+  /* 昨夜作息卡（今日页顶部） */
+  .sleep-line{font-size:12.5px;color:var(--faint);margin-top:9px;line-height:1.6}
+  .sleep-line b{font-size:14px;color:var(--ink);font-weight:600}
+  .life-mini{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .life-mini .chip{padding:8px 14px;font-size:13.5px}
+  .stepper.sm{gap:10px}
+  .stepper.sm button{width:32px;height:32px;font-size:19px;border-radius:9px}
+  .stepper.sm b{font-size:16px;min-width:24px}
+  /* 我的一天 · 事件轴 */
+  .segs{margin-top:14px}
+  .seg{background:#FBFCFD;border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+  .seg-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .seg-t{font-size:12.5px;color:var(--sub);font-weight:600;font-variant-numeric:tabular-nums}
+  .seg-cat{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:8px;color:#fff}
+  .seg-cat.arrow{background:none;color:var(--faint);padding:0 1px}
+  .seg-txt{font-size:14px;color:var(--ink);line-height:1.65;margin-top:7px;word-break:break-word}
+  .seg-meta{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:9px;font-size:12px;color:var(--sub)}
+  .seg-meta b{color:var(--ink);font-weight:600}
+  .seg-bar{height:6px;border-radius:4px;background:#EDEFF3;overflow:hidden;margin-top:9px}
+  .seg-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#9FC3F5,#4C8DF0)}
+  .seg-quote{margin-top:9px;padding:8px 11px;background:#fff;border-left:3px solid var(--blue);
+    border-radius:0 9px 9px 0;font-size:13px;color:var(--ink);line-height:1.65}
+  .seg-quote:before{content:'关键想法 · ';color:var(--faint);font-size:11.5px}
+  .seg-ai{margin-top:8px;font-size:12.5px;color:var(--blue-ink);background:var(--blue-bg);
+    border-radius:9px;padding:7px 11px;line-height:1.6}
+  .seg-ai:before{content:'🔍 '}
+  /* 今日地图 */
+  .map-box{margin-top:14px;background:#FBFCFD;border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .map-box .map-h{font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px}
+  .map-box .map-h+.map-h{margin-top:15px}
+  .trow{display:flex;align-items:center;gap:9px;margin-top:7px;font-size:12.5px}
+  .trow .nm{width:34px;color:var(--sub);flex:none}
+  .trow .blk{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-1.5px;font-size:14px;flex:none}
+  .trow .vl{color:var(--faint);font-size:11.5px}
+  .phase{font-size:13px;color:var(--ink);line-height:1.75;margin-top:6px}
+  .phase b{color:var(--faint);font-weight:600;margin-right:7px}
+  .theme-li{font-size:13.5px;color:var(--ink);padding:8px 0;border-top:1px dashed var(--line);line-height:1.55}
+  .theme-li:first-of-type{border-top:none}
+  .theme-li em{display:block;font-style:normal;font-size:12px;color:var(--faint);margin-top:3px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .spot{background:var(--coral-bg);border-radius:11px;padding:11px 13px;font-size:13.5px;
+    color:#B4530F;line-height:1.7;margin-top:10px}
+  .oneline{margin-top:14px;background:linear-gradient(135deg,#EEF4FF,#F7F1FF);border:1px solid #DEE7F8;
+    border-radius:15px;padding:15px 16px}
+  .oneline .ol-k{font-size:12px;color:var(--sub);font-weight:700;margin-bottom:6px}
+  .oneline .ol-v{font-size:14.5px;color:var(--ink);line-height:1.8;font-weight:500}
+  .rv-note{font-size:11.5px;color:var(--faint);margin-top:12px;line-height:1.65}
 </style>
 </head>
 <body>
@@ -295,6 +342,23 @@
         <button class="btn btn-ghost" id="resetAllBtn">🗑 彻底清空</button>
         <span class="note">每日重置，昨日自动归档留趋势（客户 / 账户 / 任务保留）</span>
       </div>
+      <div class="card">
+        <div class="card-h"><h3>🌙 昨夜 · 起床</h3><span class="hint date" data-today></span></div>
+        <div class="row">
+          <div><label>昨晚入睡</label><input type="time" id="bedTime"></div>
+          <div><label>今天起床</label><input type="time" id="wakeTime"></div>
+        </div>
+        <div class="sleep-line" id="sleepLine">醒来先填这两个，这里自动算睡了多久</div>
+        <label>☕ 咖啡</label>
+        <div id="coffeeList"></div>
+        <div class="addline"><input type="text" id="coffeeInput" placeholder="比如：美式 1 杯 14:00"><button class="btn btn-ghost btn-sm" id="coffeeAdd">+</button></div>
+        <div class="life-mini">
+          <span class="chip" id="stretchChip">✅ 今日拉伸</span>
+          <span style="font-size:13px;color:var(--sub)">本周运动</span>
+          <div class="stepper sm"><button id="exMinus">−</button><b id="exNum">0</b><button id="exPlus">+</button></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-h"><h3>今日状态</h3><span class="hint date" data-today></span></div>
         <label>精力（1–10）</label>
@@ -361,26 +425,6 @@
       </div>
     </section>
 
-    <!-- 生活 -->
-    <section class="sec" id="sec-life">
-      <div class="card">
-        <div class="card-h"><h3>能量管理</h3><span class="hint date" data-today></span></div>
-        <div class="row">
-          <div><label>入睡</label><input type="time" id="bedTime"></div>
-          <div><label>起床</label><input type="time" id="wakeTime"></div>
-        </div>
-        <label>咖啡</label>
-        <div id="coffeeList"></div>
-        <div class="addline"><input type="text" id="coffeeInput" placeholder="比如：美式 1 杯 14:00"><button class="btn btn-ghost btn-sm" id="coffeeAdd">+</button></div>
-        <label>今日拉伸</label>
-        <div class="chips"><span class="chip" id="stretchChip">✅ 已完成拉伸</span></div>
-        <label>本周运动次数</label>
-        <div class="stepper">
-          <button id="exMinus">−</button><b id="exNum">0</b><button id="exPlus">+</button>
-        </div>
-      </div>
-    </section>
-
     <!-- 客户 -->
     <section class="sec" id="sec-customers">
       <div class="card">
@@ -424,7 +468,7 @@
           <div class="chips sm" id="statPick"></div>
         </div>
         <div class="pick-row">
-          <div class="pick-lbl">C · 效率 <em>拉一下，不想评就点「不评」</em></div>
+          <div class="pick-lbl">C · ⚡ 投入度 <em>拉一下，不想评就点「不评」</em></div>
           <div class="eff-row">
             <input type="range" id="effRange" min="1" max="10" step="1" value="6">
             <span class="eff-val" id="effVal">—</span>
@@ -435,10 +479,10 @@
       </div>
     </section>
 
-    <!-- 复盘 -->
+    <!-- 我的一天 -->
     <section class="sec" id="sec-review">
       <div class="card">
-        <div class="card-h"><h3>复盘 · 一天的状态轴</h3><span class="hint" id="rvCount"></span></div>
+        <div class="card-h"><h3>我的一天</h3><span class="hint" id="rvCount"></span></div>
         <div class="daynav">
           <button class="dbtn" id="rvPrev">‹ 前一天</button>
           <div class="dtitle" id="rvDate"></div>
@@ -536,10 +580,9 @@
     <button class="on" data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7M6 10v9h12v-9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>今日</button>
     <button data-tab="accounts"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 20V10m5 10V4m5 16v-7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>账户</button>
     <button data-tab="tasks"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>任务</button>
-    <button data-tab="life"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-7 5-13 14-14-1 9-7 14-14 14z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg></span>生活</button>
     <button data-tab="customers"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.9"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.9"/></svg></span>客户</button>
     <button data-tab="notes"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>随记</button>
-    <button data-tab="review"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7.5 15.5l3.5-4.5 3 2.5L20 7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>复盘</button>
+    <button data-tab="review"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.9"/><path d="M12 7v5l3.2 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>我的一天</button>
     <button data-tab="sync"><span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 0 0-14-4M4 13a8 8 0 0 0 14 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M4 4v4h4M20 20v-4h-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>同步</button>
   </nav>
 </div>
@@ -550,7 +593,7 @@ const LS_KEY='personalOS_v1';
 const GH_API='https://api.github.com/gists';
 const GIST_FILENAME='blueberry-os-data.json';
 const MOODS=['好','平静','普通','累','焦虑'];
-/* ===== 随记分类体系：类别 / 心情 / 效率 ===== */
+/* ===== 随记分类体系：类别 / 情绪+状态 / ⚡ 投入度 ===== */
 const CATS=[
   {k:'work',  n:'工作', c:'#EA6A3F'},
   {k:'life',  n:'生活', c:'#1EA0A0'},
@@ -601,7 +644,7 @@ function moodScore(list){
 function moodTxt(list){
   return (list||[]).map(m=>{const x=moodMeta(m);return x.e+x.k;}).join(' ');
 }
-/* 当前随记草稿：类别(单选) / 心情(多选) / 效率(null=不评) */
+/* 当前随记草稿：类别(单选) / 情绪+状态(多选) / 投入度(null=不评) */
 let noteDraft={cat:null,moods:[],eff:null};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -630,7 +673,7 @@ function migrate(st){
   st.notes.forEach(n=>{
     if(!n.date) n.date=dateOf(n.ts||Date.now());
     if(!Array.isArray(n.moods)) n.moods=[];          // 老随记无心情标签
-    if(!('eff' in n)) n.eff=null;                    // 老随记未评效率
+    if(!('eff' in n)) n.eff=null;                    // 老随记未评投入度
   });
   if(!Array.isArray(st.tasks))st.tasks=[];
   st.tasks.forEach(t=>{ if(!t.id)t.id=uid(); if(!t.date) t.date=t.ts?dateOf(t.ts):'更早'; });
@@ -708,7 +751,9 @@ function resetDaily(){
   snapshotToday();
   state.today={date:todayStr(),energy:7,mood:'',keyword:''};
   state.top3=[]; state.journal={done:'',evidence:'',tomorrow:''};
-  state.life={bed:'',wake:'',coffee:[],stretch:false,weeklyExercise:0};
+  // 昨夜入睡属于「今天」，新的一天要带走；本周运动是周计数，不跟着日重置
+  const bed=(state.life&&state.life.bed)||'', wk=(state.life&&state.life.weeklyExercise)||0;
+  state.life={bed:bed,wake:'',coffee:[],stretch:false,weeklyExercise:wk};
   state.lastResetDate=todayStr();
   save(); renderTrend(); toast('🌅 已开启新的一天，昨日已归档留趋势');
 }
@@ -872,11 +917,29 @@ function renderTasks(){
     }
   }
 }
+/* 睡眠时长：入睡→起床（跨零点自动加一天），返回分钟数或 null */
+function sleepMins(){
+  const b=state.life.bed,w=state.life.wake;
+  if(!b||!w)return null;
+  const bp=String(b).split(':').map(Number), wp=String(w).split(':').map(Number);
+  if(bp.length<2||wp.length<2)return null;
+  let m=(wp[0]*60+wp[1])-(bp[0]*60+bp[1]);
+  if(m<0)m+=1440;                                   // 昨晚睡、今早起
+  return m;
+}
 function renderLife(){
-  document.getElementById('bedTime').value=state.life.bed;
-  document.getElementById('wakeTime').value=state.life.wake;
-  document.getElementById('bedTime').onchange=e=>{state.life.bed=e.target.value;save();};
-  document.getElementById('wakeTime').onchange=e=>{state.life.wake=e.target.value;save();};
+  const bt=document.getElementById('bedTime'), wt=document.getElementById('wakeTime');
+  if(!bt||!wt)return;
+  bt.value=state.life.bed; wt.value=state.life.wake;
+  bt.onchange=e=>{state.life.bed=e.target.value;save();renderLife();};
+  wt.onchange=e=>{state.life.wake=e.target.value;save();renderLife();};
+  const sl=document.getElementById('sleepLine');
+  if(sl){
+    const m=sleepMins();
+    sl.innerHTML = m===null
+      ? '醒来先填这两个，这里自动算睡了多久'
+      : `睡了 <b>${Math.floor(m/60)} 小时 ${m%60} 分</b>　`+(m<360?'😴 偏短，今天悠着点':m<=540?'✅ 睡够了':'😌 补了个大觉');
+  }
   const cl=document.getElementById('coffeeList');cl.innerHTML='';
   state.life.coffee.forEach((c,i)=>{const d=document.createElement('div');d.className='mini';
     d.style.cssText='font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--line)';
@@ -966,7 +1029,7 @@ function renderNotes(){
       if(n.cat) tags.push(`<span class="t cat" style="background:${c.c}">${c.n}</span>`);
       (n.moods||[]).forEach(m=>{const x=moodMeta(m);
         tags.push(`<span class="t ${isStat(m)?'stat':'mood'}">${x.e}${esc(m)}</span>`);});
-      if(typeof n.eff==='number'&&n.eff>0) tags.push(`<span class="t eff">效率 ${n.eff}</span>`);
+      if(typeof n.eff==='number'&&n.eff>0) tags.push(`<span class="t eff">⚡ 投入度 ${n.eff*10}</span>`);
       item.innerHTML=`<div class="txt"><span class="stamp${n.ts?'':' old'}">🕘 ${ts}</span>`
         +`<div class="note-text">${esc(n.text)}</div>`
         +(tags.length?`<div class="n-tags">${tags.join('')}</div>`:'')
@@ -1002,15 +1065,15 @@ function renderNotePick(){
   const er=document.getElementById('effRange'),ev=document.getElementById('effVal'),eo=document.getElementById('effOff');
   if(er&&!er._b){
     er._b=1;
-    er.addEventListener('input',()=>{noteDraft.eff=+er.value;ev.textContent=er.value+' / 10';eo.classList.remove('on');});
+    er.addEventListener('input',()=>{noteDraft.eff=+er.value;ev.textContent=er.value*10+' / 100';eo.classList.remove('on');});
   }
   if(eo) eo.onclick=()=>{noteDraft.eff=(noteDraft.eff===null)?+(er?er.value:6):null;renderNotePick();};
   if(er&&document.activeElement!==er) er.value=noteDraft.eff||6;
-  if(ev) ev.textContent=noteDraft.eff?(noteDraft.eff+' / 10'):'—';
+  if(ev) ev.textContent=noteDraft.eff?(noteDraft.eff*10+' / 100'):'—';
   if(eo) eo.classList.toggle('on',noteDraft.eff===null);
 }
 
-/* ---------- 复盘 · 一天的状态坐标轴 ---------- */
+/* ---------- 我的一天：投入度坐标轴 + 事件轴 + 今日地图 ---------- */
 let rvDate=null;                                   // null = 今天
 function rvDateStr(){return rvDate||todayStr();}
 function shiftDate(d,n){
@@ -1018,59 +1081,277 @@ function shiftDate(d,n){
   const t=new Date(p[0],p[1]-1,p[2]+n);
   return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
 }
-/* 三轨图：上=心情曲线（纵轴情绪高低）· 中=效率柱 · 下=类别色条，横轴统一为时间 */
-function rvChartSVG(list){
-  const W=480,H=300,PL=30,PR=12,iw=W-PL-PR;
-  const hrs=list.map(n=>{const d=new Date(n.ts);return d.getHours()+d.getMinutes()/60;});
+/* 投入度坐标轴：纵轴 0–100，横轴 = 真实记录的时刻。没记的时段不补值 */
+function hoursOf(ts){const d=new Date(ts);return d.getHours()+d.getMinutes()/60;}
+/* 存储仍是 1–10，界面统一按 0–100 的「投入度」显示 */
+function effPct(n){return (typeof n.eff==='number'&&n.eff>0)?Math.round(n.eff*10):null;}
+
+/* 把一天的记录切成「事件段」：相邻两条间隔 ≤45 分钟算同一段 */
+const SEG_GAP=45;
+function buildSegments(list){
+  const L=list.slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!L.length)return [];
+  const raw=[];let cur=[L[0]];
+  for(let i=1;i<L.length;i++){
+    const gap=((L[i].ts||0)-(cur[cur.length-1].ts||0))/60000;
+    if(gap<=SEG_GAP)cur.push(L[i]); else{raw.push(cur);cur=[L[i]];}
+  }
+  raw.push(cur);
+  return raw.map((items,i)=>{
+    const next=raw[i+1];
+    const start=items[0].ts, lastTs=items[items.length-1].ts;
+    let end=lastTs+20*60000;                       // 段尾留 20 分钟活动余量
+    if(next&&next[0].ts) end=Math.min(end,next[0].ts-60000);
+    if(end<lastTs) end=lastTs;
+    const cc={};
+    items.forEach(n=>{const k=n.cat||'none';cc[k]=(cc[k]||0)+1;});
+    const ck=Object.keys(cc).sort((a,b)=>cc[b]-cc[a]);
+    const cats=(ck[1]&&cc[ck[1]]/items.length>=0.34)?[ck[0],ck[1]]:[ck[0]];
+    const es=items.map(effPct).filter(x=>x!==null);
+    const eff=es.length?Math.round(es.reduce((a,b)=>a+b,0)/es.length):null;
+    const emoSeq=[],statCnt={};
+    items.forEach(n=>(n.moods||[]).forEach(m=>{
+      if(isStat(m)) statCnt[m]=(statCnt[m]||0)+1;
+      else if(emoSeq[emoSeq.length-1]!==m) emoSeq.push(m);
+    }));
+    const statKeys=Object.keys(statCnt).sort((a,b)=>statCnt[b]-statCnt[a]);
+    const text=items.map(n=>n.text).filter(Boolean).join('；');
+    const key=items.slice().sort((a,b)=>(b.text||'').length-(a.text||'').length)[0];
+    return {items,start,end,mins:Math.max(5,Math.round((end-start)/60000)),
+      h0:hoursOf(start),h1:hoursOf(end),cats,eff,emoSeq,statKeys,statCnt,text,key};
+  });
+}
+/* 一段的状态文案：情绪首尾 + 出现过最多的状态 */
+function segStateTxt(s){
+  const a=[];
+  if(s.emoSeq.length===1) a.push(statMeta(s.emoSeq[0]));
+  else if(s.emoSeq.length>1) a.push(statMeta(s.emoSeq[0])+' → '+statMeta(s.emoSeq[s.emoSeq.length-1]));
+  if(s.statKeys.length) a.push(s.statKeys.slice(0,2).map(statMeta).join(' '));
+  return a.join('　')||'没标状态';
+}
+/* 段级观察：只用这段真实出现过的数据说话 */
+function segAI(s){
+  const out=[],txt=s.items.map(n=>n.text||'').join(' ');
+  if(s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0) out.push('注意力在这段出现了明显切换。');
+  if(s.eff!==null&&s.eff>=70&&s.cats[0]==='work') out.push('处理真实问题时投入度明显偏高——这是你的发动机。');
+  if(s.eff!==null&&s.eff<=40) out.push('这段投入度偏低，多半不是能力问题，是启动问题。');
+  if(s.cats[0]==='growth'&&s.eff!==null&&s.eff>=65) out.push('虽然没有按「任务」推进，但出现了主动探索——这是最难被计划、也最值钱的部分。');
+  if(s.emoSeq.length>1){
+    const a=moodMeta(s.emoSeq[0]).s,b=moodMeta(s.emoSeq[s.emoSeq.length-1]).s;
+    if(a>b) out.push('情绪在这段是往下走的，留意是什么把它带下去的。');
+    else if(b>a) out.push('情绪在这段慢慢往上走了。');
+  }
+  if(!out.length&&/刷手机|走神|摸鱼|逃避|不想面对|拖延/.test(txt)) out.push('这段出现了明显的逃避动作，记下来就好，不用自责。');
+  if(out.length<2&&s.items.length>=3) out.push('这段记得很密，说明当时脑子一直在转。');
+  return out.slice(0,2).join(' ');
+}
+/* 时段状态词，用于「状态变化」那几行 */
+function phaseWord(s){
+  if(s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0) return '出现分心';
+  if(s.eff!==null&&s.eff>=70) return '进入状态';
+  if(s.eff!==null&&s.eff>=55) return '在做正事';
+  if(s.eff!==null&&s.eff<=40) return '低能量';
+  if(s.statKeys.indexOf('有灵感')>=0||s.statKeys.indexOf('思考中')>=0) return '思考增多';
+  if(s.emoSeq.some(m=>['焦虑','烦躁','愤怒'].indexOf(m)>=0)) return '焦躁';
+  if(s.emoSeq.some(m=>['低落','疲惫'].indexOf(m)>=0)) return '低能量';
+  if(s.emoSeq.length) return '平稳';
+  return '只记了事，没标状态';
+}
+/* 反复出现的想法：本地主题词典 + 命中次数，不联网 */
+const THEMES=[
+  {n:'对当前工作的失望',kw:['失望','没意思','无聊','不想干','厌倦','没意义','内耗','麻木','混日子','无所谓','不想上班']},
+  {n:'对技术问题本身仍然有兴趣',kw:['技术','原理','为什么','机理','配方','结构','数据','测试','实验','参数','PU','树脂','固化','粘度','异氰酸酯']},
+  {n:'在想自己到底适不适合这条路',kw:['适不适合','适合吗','职业','要不要转','转行','值不值','这条路','前景','方向','赛道']},
+  {n:'学习启动困难',kw:['学不进去','启动','拖延','看不下去','静不下','学不动','不想学','没法开始','看不进']},
+  {n:'人际 / 协作上的消耗',kw:['沟通','开会','对接','同事','领导','汇报','推不动','扯皮','甩锅']},
+  {n:'身体在发出信号',kw:['累','困','头疼','失眠','睡','肩','脖子','腰','疲惫','没睡好','头晕']},
+  {n:'在逃避某件事',kw:['刷手机','逃避','不想面对','躲','摆烂','摸鱼','分心','走神']},
+  {n:'事情在往前推进',kw:['推进','完成','搞定','谈成','寄样','报价','回复','方案','签','成交','发了','确认']}
+];
+function rvThemes(list){
+  const all=list.map(n=>n.text||'');
+  return THEMES.map(t=>{
+    const hits=[];
+    all.forEach(s=>t.kw.forEach(w=>{if(s&&s.indexOf(w)>=0&&hits.indexOf(s)<0)hits.push(s);}));
+    return hits.length?{name:t.n,n:hits.length,eg:hits[0]}:null;
+  }).filter(Boolean).sort((a,b)=>b.n-a.n);
+}
+function fmtDur(m){
+  m=Math.round(m);
+  if(m<60)return m+'m';
+  return Math.floor(m/60)+'h'+(m%60?String(m%60).padStart(2,'0'):'');
+}
+const CLOCK_ON=['🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚'];
+const CLOCK_HALF=['🕧','🕜','🕝','🕞','🕟','🕠','🕡','🕢','🕣','🕤','🕥','🕦'];
+function clockEmoji(ts){
+  const d=new Date(ts),h=d.getHours();
+  return (d.getMinutes()>=30?CLOCK_HALF:CLOCK_ON)[h%12];
+}
+function rvChartSVG(list,segs){
+  const W=480,H=246,PL=34,PR=14,iw=W-PL-PR;
+  const hrs=list.map(n=>hoursOf(n.ts));
   let h0=Math.floor(Math.min.apply(null,hrs)),h1=Math.ceil(Math.max.apply(null,hrs));
   if(h1-h0<3){h0=Math.max(0,h0-1);h1=Math.min(24,h1+1);}
   if(h1<=h0){h0=Math.max(0,h0-1);h1=Math.min(24,h0+1);}
   const X=h=>PL+(h-h0)/(h1-h0)*iw;
-  const YM=s=>148-(s-1)/4*124;                     // 心情 1..5 → y 148..24
-  const E0=236,E1=180, YE=e=>E0-(e/10)*(E0-E1);    // 效率 0..10 → y 236..180
-  const CY=252,CH=12;                              // 类别轨
+  const T0=176,T1=36, Y=v=>T0-(v/100)*(T0-T1);     // 投入度 0 → 176，100 → 36
+  const CY=194,CH=13;                              // 底部类别时间条
   const p=[];
-  p.push(`<text x="${PL}" y="15" font-size="9" fill="#C3C8D0">情绪高低</text>`);
-  p.push(`<text x="${PL}" y="177" font-size="9" fill="#C3C8D0">效率</text>`);
-  const step=(h1-h0)>12?2:1;
+  [0,25,50,75,100].forEach(v=>{
+    p.push(`<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}" stroke="${v===0?'#DDE2EA':'#EFF2F6'}" stroke-width="1"/>`);
+    p.push(`<text x="${PL-7}" y="${(Y(v)+3.4).toFixed(1)}" font-size="9.5" fill="#B9BEC6" text-anchor="end">${v}</text>`);
+  });
+  p.push(`<text x="${PL}" y="14" font-size="9.5" fill="#C3C8D0">⚡ 投入度</text>`);
+  const step=(h1-h0)>12?3:((h1-h0)>6?2:1);
   for(let h=Math.ceil(h0);h<=h1;h+=step){
     const x=X(h);
-    p.push(`<line x1="${x.toFixed(1)}" y1="20" x2="${x.toFixed(1)}" y2="${CY+CH}" stroke="#E9ECF1" stroke-width="1"/>`);
-    p.push(`<text x="${x.toFixed(1)}" y="${CY+CH+18}" font-size="9.5" fill="#9AA0A6" text-anchor="middle">${h}点</text>`);
+    p.push(`<line x1="${x.toFixed(1)}" y1="${T1}" x2="${x.toFixed(1)}" y2="${CY+CH}" stroke="#F1F3F7" stroke-width="1"/>`);
+    p.push(`<text x="${x.toFixed(1)}" y="${CY+CH+18}" font-size="9.5" fill="#9AA0A6" text-anchor="middle">${String(h).padStart(2,'0')}:00</text>`);
   }
-  [[5,'😊 快乐'],[4,'✨ 愉悦'],[3,'😐 平静'],[2,'😖 偏低'],[1,'😞 低落']].forEach(a=>{
-    p.push(`<text x="25" y="${(YM(a[0])+3.4).toFixed(1)}" font-size="9" fill="#B9BEC6" text-anchor="end">${a[1]}</text>`);
+  segs.forEach(s=>{                                 // 类别时间条：宽度=这段真实占的时长
+    const c=catOf(s.cats[0]);
+    const x1=X(s.h0),x2=X(s.h1);
+    p.push(`<rect x="${x1.toFixed(1)}" y="${CY}" width="${Math.max(3,x2-x1).toFixed(1)}" height="${CH}" rx="3" fill="${c.c}" opacity=".82">`
+      +`<title>${hhmm(s.start)}–${hhmm(s.end)} ${c.n}</title></rect>`);
   });
-  p.push(`<text x="25" y="${E1+8}" font-size="9" fill="#B9BEC6" text-anchor="end">10</text>`);
-  p.push(`<text x="25" y="${E0+3}" font-size="9" fill="#B9BEC6" text-anchor="end">0</text>`);
-  p.push(`<line x1="${PL}" y1="${E0}" x2="${W-PR}" y2="${E0}" stroke="#DDE2EA" stroke-width="1"/>`);
-  p.push(`<line x1="${PL}" y1="168" x2="${W-PR}" y2="168" stroke="#EEEFF3" stroke-width="1" stroke-dasharray="3 3"/>`);
-  const pts=list.map(n=>{
-    const d=new Date(n.ts);const h=d.getHours()+d.getMinutes()/60;
-    return {n:n,h:h,x:X(h),ms:moodScore(n.moods)};
-  });
-  const mp=pts.filter(o=>o.ms!==null);
-  if(mp.length>1){
-    p.push(`<polyline points="${mp.map(o=>o.x.toFixed(1)+','+YM(o.ms).toFixed(1)).join(' ')}" fill="none" stroke="#C9D5EA" stroke-width="1.6" stroke-dasharray="4 3"/>`);
+  const pts=list.map(n=>({x:X(hoursOf(n.ts)),v:effPct(n),n:n})).filter(o=>o.v!==null).sort((a,b)=>a.x-b.x);
+  for(let i=0;i<pts.length-1;i++){                  // 间隔超过 1.5 小时 → 虚线，表示中间没记
+    const gapH=Math.abs(pts[i+1].n.ts-pts[i].n.ts)/3600000;
+    p.push(`<line x1="${pts[i].x.toFixed(1)}" y1="${Y(pts[i].v).toFixed(1)}" x2="${pts[i+1].x.toFixed(1)}" y2="${Y(pts[i+1].v).toFixed(1)}" `
+      +`stroke="${gapH>=1?'#C9D5EA':'#4C8DF0'}" stroke-width="1.8"${gapH>=1?' stroke-dasharray="5 4"':''}/>`);
   }
-  mp.forEach(o=>{
-    const c=catOf(o.n.cat);
-    p.push(`<circle cx="${o.x.toFixed(1)}" cy="${YM(o.ms).toFixed(1)}" r="5.2" fill="${c.c}" stroke="#fff" stroke-width="1.6">`
-      +`<title>${hhmm(o.n.ts)} ${esc(moodTxt(o.n.moods))}</title></circle>`);
-  });
-  const ep=pts.filter(o=>typeof o.n.eff==='number'&&o.n.eff>0);
-  const bw=Math.max(5,Math.min(18,iw/Math.max(ep.length,1)*0.5));
-  ep.forEach(o=>{
-    const y=YE(o.n.eff);
-    p.push(`<rect x="${(o.x-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(E0-y).toFixed(1)}" rx="2.5" fill="#9FC3F5">`
-      +`<title>${hhmm(o.n.ts)} 效率 ${o.n.eff}</title></rect>`);
-  });
   pts.forEach(o=>{
     const c=catOf(o.n.cat);
-    p.push(`<rect x="${(o.x-2.5).toFixed(1)}" y="${CY}" width="5" height="${CH}" rx="2" fill="${c.c}" opacity=".85">`
-      +`<title>${hhmm(o.n.ts)} ${c.n}</title></rect>`);
+    p.push(`<circle cx="${o.x.toFixed(1)}" cy="${Y(o.v).toFixed(1)}" r="5" fill="${c.c}" stroke="#fff" stroke-width="1.6">`
+      +`<title>${hhmm(o.n.ts)} 投入度 ${o.v} · ${esc(moodTxt(o.n.moods)||'未标状态')}</title></circle>`);
+  });
+  list.forEach(n=>{                                 // 没评投入度的：底部空心点，不参与折线
+    if(effPct(n)!==null)return;
+    p.push(`<circle cx="${X(hoursOf(n.ts)).toFixed(1)}" cy="${CY+CH/2}" r="3" fill="#fff" stroke="#C9CFD8" stroke-width="1.4">`
+      +`<title>${hhmm(n.ts)} 未评投入度</title></circle>`);
   });
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img">${p.join('')}</svg>`;
+}
+/* 事件轴：一段 = 一个真实发生过的时间切片 */
+function rvTimeline(segs){
+  return `<div class="dist-h" style="margin-top:18px">事件轴 · 今天被切成 ${segs.length} 段</div><div class="segs">`
+    +segs.map(s=>{
+      const catHtml=s.cats.map((k,i)=>(i?'<span class="seg-cat arrow">→</span>':'')
+        +`<span class="seg-cat" style="background:${catOf(k).c}">${catOf(k).n}</span>`).join('');
+      const quote=(s.key&&s.key.text&&s.items.length>1)?`<div class="seg-quote">${esc(s.key.text)}</div>`:'';
+      const ai=segAI(s);
+      return `<div class="seg">
+        <div class="seg-h"><span class="seg-t">${clockEmoji(s.start)} ${hhmm(s.start)}–${hhmm(s.end)}</span>${catHtml}</div>
+        <div class="seg-txt">${esc(s.text)}</div>
+        <div class="seg-meta"><span>状态：<b>${esc(segStateTxt(s))}</b></span>`
+          +`<span>⚡ 投入度：<b>${s.eff!==null?s.eff:'未评'}</b></span><span>${s.items.length} 条记录 · ${fmtDur(s.mins)}</span></div>`
+        +(s.eff!==null?`<div class="seg-bar"><i style="width:${s.eff}%"></i></div>`:'')
+        +quote+(ai?`<div class="seg-ai">${esc(ai)}</div>`:'')+`</div>`;
+    }).join('')+`</div>`;
+}
+/* 今日地图：时间去哪了 / 状态怎么变 / 反复出现什么 / 最值得注意 */
+function rvMap(list,segs){
+  const byCat={};CATS.forEach(c=>byCat[c.k]=0);
+  segs.forEach(s=>{                                 // 跨两类的一段按 7:3 分摊
+    if(s.cats.length===2){byCat[s.cats[0]]+=s.mins*0.7;byCat[s.cats[1]]+=s.mins*0.3;}
+    else byCat[s.cats[0]]+=s.mins;
+  });
+  const rows=CATS.filter(c=>byCat[c.k]>=1).sort((a,b)=>byCat[b.k]-byCat[a.k]);
+  const mx=rows.length?byCat[rows[0].k]:1;
+  const trow=rows.length?rows.map(c=>{
+    const blk='█'.repeat(Math.max(1,Math.round(byCat[c.k]/mx*14)));
+    return `<div class="trow"><span class="nm">${c.n}</span><span class="blk" style="color:${c.c}">${blk}</span>`
+      +`<span class="vl">${fmtDur(byCat[c.k])}</span></div>`;
+  }).join(''):'<div class="tl-cap" style="text-align:left">没标类别，算不出时间分配</div>';
+
+  const PH=[{k:'上午',f:h=>h>=5&&h<12},{k:'下午',f:h=>h>=12&&h<18},{k:'晚上',f:h=>h>=18||h<5}];
+  const phaseHtml=PH.map(p=>{
+    const ss=segs.filter(s=>p.f(new Date(s.start).getHours()));
+    if(!ss.length)return `<div class="phase"><b>${p.k}</b><span style="color:var(--faint)">没有记录</span></div>`;
+    const ws=ss.map(phaseWord);
+    return `<div class="phase"><b>${p.k}</b>${ws.filter((w,i)=>i===0||w!==ws[i-1]).join(' → ')}</div>`;
+  }).join('');
+
+  const th=rvThemes(list);
+  const thHtml=th.length?th.slice(0,4).map(t=>
+    `<div class="theme-li">${esc(t.name)}<em>${esc(t.eg.slice(0,42))}${t.eg.length>42?'…':''}</em></div>`).join('')
+    :'<div class="tl-cap" style="text-align:left">今天记的字太少，暂时提炼不出反复出现的想法</div>';
+
+  const es=segs.filter(s=>s.eff!==null);
+  let spot;
+  if(list.length<3) spot='今天只记了 '+list.length+' 条，任何结论都会很勉强。多记两笔、顺手打个 ⚡ 投入度，这里的判断才站得住。';
+  else if(es.length<2) spot='只有 1 段评了投入度，暂时比不出高低。想看清「你什么时候最容易进入状态」，至少给两段打分。';
+  else{
+    const hi=es.slice().sort((a,b)=>b.eff-a.eff)[0], lo=es.slice().sort((a,b)=>a.eff-b.eff)[0];
+    const hc=catOf(hi.cats[0]).n, lc=catOf(lo.cats[0]).n;
+    const dis=segs.filter(s=>s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0);
+    if(catOf(hi.cats[0]).k!==catOf(lo.cats[0]).k&&hi.eff-lo.eff>=20)
+      spot=`你在「${hc}」里的投入度（${hi.eff}）明显高于「${lc}」（${lo.eff}）——同样的你，换个事做差别就这么大。这才是今天最值得记住的一点。`;
+    else if(dis.length>=2)
+      spot=`今天有 ${dis.length} 段明显分心 / 空转，落在 ${dis.map(s=>hhmm(s.start)).join('、')}。不是你不行，是这些时间点本来就不适合硬撑。`;
+    else
+      spot=`今天投入度最高的一段是 ${hhmm(hi.start)} 的「${hc}」（${hi.eff}），最低是 ${hhmm(lo.start)} 的「${lc}」（${lo.eff}），差 ${hi.eff-lo.eff} 分。回头看看这两段各自发生了什么。`;
+  }
+  return `<div class="map-box">
+    <div class="map-h">📊 今天，我到底把时间花在哪？</div>${trow}
+    <div class="map-h">🧠 今天的状态变化</div>${phaseHtml}
+    <div class="map-h">💭 今天反复出现的想法</div>${thHtml}
+    <div class="map-h">🔍 今天最值得注意的事</div><div class="spot">${esc(spot)}</div>
+  </div>`;
+}
+/* 一句话结论：只说一句，不写成工作汇报 */
+function rvOneLine(list,segs){
+  const es=segs.filter(s=>s.eff!==null);
+  const hi=es.length?es.slice().sort((a,b)=>b.eff-a.eff)[0]:null;
+  const lo=es.length?es.slice().sort((a,b)=>a.eff-b.eff)[0]:null;
+  const dis=segs.some(s=>s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0);
+  const exp=segs.some(s=>s.statKeys.indexOf('有灵感')>=0||s.statKeys.indexOf('思考中')>=0);
+  let head;
+  if(dis&&exp) head='注意力在工作、探索和逃避之间来回切换';
+  else if(dis) head='注意力几度被拉走，但每次又回到了手上的事';
+  else if(exp) head='脑子一整天都没真正停过，而且多数时候是自己在往前想';
+  else head='一整天没什么大起大落，稳稳地过完了';
+  let tail;
+  if(!es.length) tail='投入度还没打分，拉一下滑块，这里就能说出更准的话';
+  else if(hi&&lo&&catOf(hi.cats[0]).k!==catOf(lo.cats[0]).k&&hi.eff-lo.eff>=20)
+    tail=`真正让你进入状态的，仍然是「${catOf(hi.cats[0]).n}」这种具体的事，而不是抽象的「${catOf(lo.cats[0]).n}」`;
+  else if(hi) tail=`进入状态最深的那一刻在 ${hhmm(hi.start)}，投入度 ${hi.eff}`;
+  else tail='投入度还没打分';
+  return `不是没做事，而是${head}；${tail}。`;
+}
+/* 折叠区：原始记录 + 标签分布 */
+let rvDetailOpen=false;
+function rvDetail(list){
+  const byCat={};CATS.forEach(c=>byCat[c.k]=0);
+  list.forEach(n=>byCat[n.cat||'none']++);
+  const moodCnt={},statCnt={};
+  list.forEach(n=>(n.moods||[]).forEach(m=>{
+    if(isStat(m))statCnt[m]=(statCnt[m]||0)+1; else moodCnt[m]=(moodCnt[m]||0)+1;}));
+  const moodKeys=Object.keys(moodCnt).sort((a,b)=>moodCnt[b]-moodCnt[a]);
+  const statKeys=Object.keys(statCnt).sort((a,b)=>statCnt[b]-statCnt[a]);
+  const barBlock=(title,keys,cnt,cls)=>{
+    const head=`<div class="dist-h" style="margin-top:14px">${title} · 出现次数</div>`;
+    if(!keys.length)return `<div class="dist">${head}<div class="tl-cap" style="text-align:left;padding:4px 0 2px">这天没标${title}</div></div>`;
+    const mx=cnt[keys[0]]||1;
+    return `<div class="dist">${head}<div class="moodbars">`+keys.map(m=>
+      `<div class="mbar"><span class="nm">${statMeta(m)}</span><span class="tr"><span class="fl ${cls}" style="width:${(cnt[m]/mx*100).toFixed(0)}%"></span></span><span class="ct">${cnt[m]}</span></div>`
+    ).join('')+`</div></div>`;
+  };
+  const segs=CATS.filter(c=>byCat[c.k]>0).map(c=>
+    `<div style="width:${(byCat[c.k]/list.length*100).toFixed(2)}%;background:${c.c}"></div>`).join('');
+  const catlg=CATS.filter(c=>byCat[c.k]>0).map(c=>`<span><i style="background:${c.c}"></i>${c.n} ${byCat[c.k]}</span>`).join('');
+  const groupsHtml=CATS.filter(c=>byCat[c.k]>0).map(c=>{
+    const items=list.filter(n=>(n.cat||'none')===c.k).map(n=>{
+      const mo=(n.moods||[]).length?` <span class="mo">${esc(moodTxt(n.moods))}</span>`:'';
+      const ef=(typeof n.eff==='number'&&n.eff>0)?` <span class="mo">⚡${n.eff*10}</span>`:'';
+      return `<div class="rv-line"><span class="t">${n.ts?hhmm(n.ts):'—'}</span><span>${esc(n.text)}${mo}${ef}</span></div>`;
+    }).join('');
+    return `<div class="rv-group"><div class="rv-gh"><i style="background:${c.c}"></i>${c.n} · ${byCat[c.k]} 条</div>${items}</div>`;
+  }).join('');
+  return `<div class="dist" style="margin-top:14px"><div class="dist-h">类别占比</div><div class="catbar">${segs}</div>
+    <div class="catbar-lg">${catlg}</div></div>`
+    +barBlock('情绪',moodKeys,moodCnt,'')+barBlock('状态',statKeys,statCnt,'st')
+    +`<div class="dist-h" style="margin-top:16px">归类后的原始记录</div>`+groupsHtml;
 }
 function renderReview(){
   const body=document.getElementById('rvBody'); if(!body)return;
@@ -1081,95 +1362,31 @@ function renderReview(){
     dt.onclick=()=>{rvDate=null;renderReview();};
   }
   const list=state.notes.filter(n=>(n.date||dateOf(n.ts))===dstr).sort((a,b)=>(a.ts||0)-(b.ts||0));
-  const cnt=document.getElementById('rvCount'); if(cnt) cnt.textContent=list.length?list.length+' 条':'';
-  if(!list.length){body.innerHTML='<div class="empty">这天还没有记录<br>去「随记」随手记一笔，这里会自动长出时间轴</div>';return;}
-
-  const byCat={}; CATS.forEach(c=>byCat[c.k]=0);
-  list.forEach(n=>byCat[n.cat||'none']++);
-  const moodCnt={},statCnt={};                       /* 情绪 / 状态 分开统计 */
-  list.forEach(n=>(n.moods||[]).forEach(m=>{
-    if(isStat(m)) statCnt[m]=(statCnt[m]||0)+1; else moodCnt[m]=(moodCnt[m]||0)+1;
-  }));
-  const effs=list.map(n=>(typeof n.eff==='number'&&n.eff>0)?n.eff:null).filter(x=>x!==null);
-  const effAvg=effs.length?effs.reduce((a,b)=>a+b,0)/effs.length:null;
-  const hourCnt={};
-  list.forEach(n=>{const h=new Date(n.ts).getHours();hourCnt[h]=(hourCnt[h]||0)+1;});
-  const peakHour=Object.keys(hourCnt).map(Number).sort((a,b)=>hourCnt[b]-hourCnt[a])[0];
-  const best=list.filter(n=>typeof n.eff==='number'&&n.eff>0).sort((a,b)=>b.eff-a.eff)[0];
-
-  /* 坐标轴 */
-  const legend=CATS.filter(c=>byCat[c.k]>0)
+  const cnt=document.getElementById('rvCount'); if(cnt)cnt.textContent=list.length?list.length+' 条记录':'';
+  if(!list.length){
+    body.innerHTML='<div class="empty">这天还没有记录<br>去「随记」随手记一笔，顺手打个 ⚡ 投入度<br>这里会自动长出坐标轴和事件轴</div>';
+    return;
+  }
+  const segs=buildSegments(list);
+  const span=list.length>1?(hhmm(list[0].ts)+' – '+hhmm(list[list.length-1].ts)):hhmm(list[0].ts);
+  const legend=CATS.filter(c=>segs.some(s=>s.cats.indexOf(c.k)>=0))
     .map(c=>`<span><i style="background:${c.c}"></i>${c.n}</span>`).join('');
-  const chart=`<div class="tl-card">${rvChartSVG(list)}
-    <div class="tl-cap">上：情绪高低（点=一条记录，悬停看标签，颜色=类别）· 中：效率 · 下：类别</div>
-    <div class="legend">${legend}</div></div>`;
-
-  /* 四个数字 */
-  const spanTxt=list.length>1?(hhmm(list[0].ts)+'–'+hhmm(list[list.length-1].ts)):'单条记录';
-  const moodKeys=Object.keys(moodCnt).sort((a,b)=>moodCnt[b]-moodCnt[a]);
-  const statKeys=Object.keys(statCnt).sort((a,b)=>statCnt[b]-statCnt[a]);
-  const topMood=moodKeys.length?moodMeta(moodKeys[0]).e+moodKeys[0]:'—';
-  const moodSub=moodKeys.length
-    ? (moodCnt[moodKeys[0]]+' 次'+(moodKeys[1]?' · 次位 '+moodMeta(moodKeys[1]).e+esc(moodKeys[1]):''))
-      +(statKeys.length?'　状态：'+statMeta(statKeys[0])+' '+statCnt[statKeys[0]]+' 次':'')
-    : (statKeys.length?'只标了状态：'+statMeta(statKeys[0])+' '+statCnt[statKeys[0]]+' 次':'情绪/状态都没标');
-  const sum=`<div class="sum-grid">
-    <div class="sumbox"><div class="k">记录条数</div><div class="v">${list.length}</div><div class="s">${spanTxt}</div></div>
-    <div class="sumbox"><div class="k">平均效率</div><div class="v">${effAvg!==null?effAvg.toFixed(1):'—'}</div><div class="s">${effs.length?effs.length+' 条评了分'+(best?' · 最高 '+best.eff:'') :'这天没评效率'}</div></div>
-    <div class="sumbox"><div class="k">主导情绪</div><div class="v" style="font-size:16px">${esc(topMood)}</div><div class="s">${moodSub}</div></div>
-    <div class="sumbox"><div class="k">最活跃时段</div><div class="v">${peakHour!=null?peakHour+' 点':'—'}</div><div class="s">${peakHour!=null?hourCnt[peakHour]+' 条记录在这段':'—'}</div></div>
-  </div>`;
-
-  /* 类别分布 + 心情分布 */
-  const segs=CATS.filter(c=>byCat[c.k]>0)
-    .map(c=>`<div style="width:${(byCat[c.k]/list.length*100).toFixed(2)}%;background:${c.c}"></div>`).join('');
-  const catlg=CATS.filter(c=>byCat[c.k]>0)
-    .map(c=>`<span><i style="background:${c.c}"></i>${c.n} ${byCat[c.k]}</span>`).join('');
-  const barBlock=(title,keys,cnt,cls)=>{
-    const head=`<div class="dist-h">${title} · 出现次数</div>`;
-    if(!keys.length) return `<div class="dist">${head}<div class="tl-cap" style="text-align:left;padding:4px 0 2px">这天没标${title}</div></div>`;
-    const mx=cnt[keys[0]]||1;
-    return `<div class="dist">${head}<div class="moodbars">`
-      +keys.map(m=>`<div class="mbar"><span class="nm">${statMeta(m)}</span>`
-        +`<span class="tr"><span class="fl ${cls}" style="width:${(cnt[m]/mx*100).toFixed(0)}%"></span></span>`
-        +`<span class="ct">${cnt[m]}</span></div>`).join('')
-      +`</div></div>`;
-  };
-  const moodHtml=barBlock('情绪',moodKeys,moodCnt,'')
-               +barBlock('状态',statKeys,statCnt,'st');
-  const dist=`<div class="dist"><div class="dist-h">类别占比</div><div class="catbar">${segs}</div>
-    <div class="catbar-lg">${catlg}</div></div>${moodHtml}`;
-
-  /* 一句话总结 */
-  const segTxt=CATS.filter(c=>byCat[c.k]>0).map(c=>c.n+' '+byCat[c.k]).join(' · ');
-  const s=[];
-  s.push(`这天记了 <b>${list.length}</b> 条：${segTxt}。`);
-  if(moodKeys.length){
-    const rest=moodKeys.slice(1);
-    s.push(`情绪主要是「${statMeta(moodKeys[0])}」${moodCnt[moodKeys[0]]} 次${rest.length?'，还出现过 '+rest.map(statMeta).join('、'):''}。`);
-  }else s.push('这天没标情绪。');
-  if(statKeys.length){
-    const rest=statKeys.slice(1);
-    s.push(`状态最常见「${statMeta(statKeys[0])}」${statCnt[statKeys[0]]} 次${rest.length?'，其次 '+rest.map(statMeta).join('、'):''}。`);
-  }else s.push('状态也没标，随手点两个就行。');
-  s.push(effAvg!==null
-    ? `效率平均 <b>${effAvg.toFixed(1)}</b>（${effs.length} 条评了）${best&&best.ts?'，'+hhmm(best.ts)+' 那笔最高 '+best.eff:''}。`
-    : '效率没打分，随手拉一下就能看到全天高低起伏。');
-  if(list.length>1) s.push(`${hhmm(list[0].ts)} 记到 ${hhmm(list[list.length-1].ts)}${peakHour!=null?'，'+peakHour+' 点前后记得最多':''}。`);
-  const summary=`<div class="rv-sum">${s.join('')}</div>`;
-
-  /* 归类清单 */
-  const groupsHtml=CATS.filter(c=>byCat[c.k]>0).map(c=>{
-    const items=list.filter(n=>(n.cat||'none')===c.k).map(n=>{
-      const mo=(n.moods||[]).length?` <span class="mo">${esc(moodTxt(n.moods))}</span>`:'';
-      const ef=(typeof n.eff==='number'&&n.eff>0)?` <span class="mo">⚡${n.eff}</span>`:'';
-      return `<div class="rv-line"><span class="t">${n.ts?hhmm(n.ts):'—'}</span><span>${esc(n.text)}${mo}${ef}</span></div>`;
-    }).join('');
-    return `<div class="rv-group"><div class="rv-gh"><i style="background:${c.c}"></i>${c.n} · ${byCat[c.k]} 条</div>${items}</div>`;
-  }).join('');
-
-  body.innerHTML=chart+sum+dist+summary+`<div class="dist-h" style="margin-top:16px">归类后的想法</div>`+groupsHtml;
+  const html=[];
+  html.push(`<div class="tl-card">${rvChartSVG(list,segs)}
+    <div class="tl-cap">每个点 = 一条真实记录 · 虚线 = 中间空了很久（不补值）· 底部色条 = 那段时间在做什么</div>
+    <div class="legend">${legend}</div></div>`);
+  html.push(`<div class="rv-note" style="margin-top:8px">${list.length} 条记录 · ${span}。坐标轴只画你记过的时刻，没记的时段留白，不替你脑补。</div>`);
+  html.push(rvTimeline(segs));
+  html.push(rvMap(list,segs));
+  html.push(`<div class="oneline"><div class="ol-k">📍 今天的你</div><div class="ol-v">${esc(rvOneLine(list,segs))}</div></div>`);
+  html.push(`<button class="fold" id="rvFold" style="margin-top:14px">${rvDetailOpen?'收起原始记录 ▴':'看看原始记录与标签分布 ▾'}</button>`);
+  if(rvDetailOpen) html.push(rvDetail(list));
+  html.push(`<div class="rv-note">上面所有「观察 / 想法 / 结论」都由本地规则从你这些记录里算出来，不联网、不外发，也不会替你编没发生过的事。</div>`);
+  body.innerHTML=html.join('');
+  const f=document.getElementById('rvFold');
+  if(f) f.onclick=()=>{rvDetailOpen=!rvDetailOpen;renderReview();};
 }
+
 function renderSync(){
   const hasToken=!!state.githubToken;
   document.getElementById('tokenBox').style.display=hasToken?'none':'block';
@@ -1225,7 +1442,7 @@ document.getElementById('noteAdd').onclick=()=>{
     cat:noteDraft.cat||null, moods:noteDraft.moods.slice(),
     eff:(noteDraft.eff===null?null:noteDraft.eff)});
   inp.value='';
-  noteDraft={cat:noteDraft.cat,moods:[],eff:null};   // 类别保留，心情/效率重置
+  noteDraft={cat:noteDraft.cat,moods:[],eff:null};   // 类别保留，情绪/状态/投入度重置
   save();renderNotePick();renderNotes();renderReview();
   toast(noteDraft.cat?'已记一笔':'已记一笔（未分类）');
 };
@@ -1233,7 +1450,7 @@ document.getElementById('noteInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('noteAdd').click();}
 });
 document.getElementById('newDayBtn').onclick=()=>{
-  if(!confirm('清空今日的精力 / 情绪 / Top3 / 日记 / 生活记录？\n（客户库、账户证据、任务会保留）'))return;
+  if(!confirm('清空今日的精力 / 情绪 / Top3 / 作息咖啡？\n（客户库、账户证据、任务会保留；昨夜入睡会带到新一天）'))return;
   resetDaily(); renderAll();
 };
 document.getElementById('resetAllBtn').onclick=resetAll;
