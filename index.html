@@ -221,6 +221,20 @@
   .eff-off{font-size:12px;color:var(--faint);cursor:pointer;border:1.5px solid var(--line);
     background:#FBFCFD;border-radius:16px;padding:5px 11px;white-space:nowrap;font-family:inherit;transition:.12s}
   .eff-off.on{background:#EEF0F4;color:#5F6368;border-color:#9AA0A6;font-weight:600}
+  /* ===== 时间段（可手动指定） ===== */
+  .span-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .span-row input[type=time],.nspan input[type=time]{font-family:inherit;font-size:12.5px;
+    border:1.5px solid var(--line);border-radius:9px;padding:5px 8px;background:#fff;color:var(--text)}
+  .span-row input[type=time]:focus,.nspan input[type=time]:focus{outline:none;border-color:var(--blue)}
+  .span-row .arw{font-size:12px;color:#C3C8D0}
+  .span-hint{font-size:11px;color:#C3C8D0;line-height:1.55;flex:1 1 100%;margin-top:4px}
+  .stamp.clk{cursor:pointer;border-bottom:1px dotted #D5DAE1}
+  .stamp.clk:hover{color:var(--blue-ink);border-bottom-color:var(--blue)}
+  .nspan{display:none;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--sub)}
+  .nspan.on{display:flex}
+  .nspan .eff-off{padding:3px 9px;font-size:11px}
+  .n-tags .t.span{background:#EEF0F4;color:#5F6368}
+  .seg-cap{font-size:10.5px;color:#B9BEC6;margin-left:4px}
   .n-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
   .n-tags .t{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:7px;background:#F1F3F6;color:var(--sub)}
   .n-tags .t.cat{color:#fff}
@@ -451,8 +465,9 @@
     <section class="sec" id="sec-notes">
       <div class="card">
         <div class="card-h"><h3>随记 · 灵感速记</h3><span class="hint">随便想，随时记</span></div>
+        <div class="pick-lbl">D · 📝 记了什么 <em>回车提交 · Shift+回车换行</em></div>
         <div class="addline">
-          <textarea id="noteInput" rows="2" placeholder="蹦出来的想法、碎片、灵感…记下来，不急着整理（可直接回车提交）"></textarea>
+          <textarea id="noteInput" rows="2" placeholder="蹦出来的想法、碎片、灵感…记下来，不急着整理（可直接回车提交）&#10;写上时间段如 9:00-10:30，复盘就按这个算；不写就自动接在上条记录后面"></textarea>
           <button class="btn btn-primary btn-sm" id="noteAdd">记一笔</button>
         </div>
         <div class="pick-row">
@@ -473,6 +488,16 @@
             <input type="range" id="effRange" min="1" max="10" step="1" value="6">
             <span class="eff-val" id="effVal">—</span>
             <button class="eff-off on" id="effOff">不评</button>
+          </div>
+        </div>
+        <div class="pick-row">
+          <div class="pick-lbl">⏱ 时间段 <em>可选。不填＝从上一段结束算到下一条记录，最后一段算到当前</em></div>
+          <div class="span-row">
+            <input type="time" id="spanFrom" aria-label="开始时间">
+            <span class="arw">→</span>
+            <input type="time" id="spanTo" aria-label="结束时间">
+            <button class="eff-off" id="spanClear">清空</button>
+            <span class="span-hint">比如 09:00 → 10:30。填了就按你填的算；只填一头也行。留空交给系统自动推。</span>
           </div>
         </div>
         <div id="noteList" class="note-list"></div>
@@ -1088,21 +1113,53 @@ function effPct(n){return (typeof n.eff==='number'&&n.eff>0)?Math.round(n.eff*10
 
 /* 把一天的记录切成「事件段」：相邻两条间隔 ≤45 分钟算同一段 */
 const SEG_GAP=45;
-function buildSegments(list){
-  const L=list.slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+/* 随记文本里手写的时间段：9:00-10:30 / 9点半~10点 / 9：00 至 11：30 … */
+const SPAN_RE=/(?<h1>\d{1,2})\s*[：:点]\s*(?:(?<m1>\d{1,2})\s*分?|(?<f1>半))?\s*[-–—~～至到]\s*(?<h2>\d{1,2})\s*[：:点]\s*(?:(?<m2>\d{1,2})\s*分?|(?<f2>半))?/;
+function parseSpan(text,ts){
+  if(!text)return null;
+  const m=String(text).match(SPAN_RE);
+  if(!m)return null;
+  const g=m.groups;
+  const toMin=(h,mm,half)=>{
+    if(h==null)return null;
+    const H=+h; if(H>23)return null;
+    const M=(mm!=null)?+mm:(half?30:0); if(M>59)return null;
+    return H*60+M;
+  };
+  const a=toMin(g.h1,g.m1,g.f1), b=toMin(g.h2,g.m2,g.f2);
+  if(a==null||b==null||b<=a||b-a>720)return null;      // 结束要晚于开始，且不超过 12 小时
+  const base=new Date(ts||Date.now());base.setHours(0,0,0,0);
+  return {s:base.getTime()+a*60000,e:base.getTime()+b*60000};
+}
+/* 每条记录的「段起点」：随记里写了时间段 → 用写的；没写 → 用记录时刻 */
+function noteStart(n){const sp=parseSpan(n.text,n.ts);return sp?sp.s:(n.ts||0);}
+function buildSegments(list,dayStart){
+  const L=list.slice().sort((a,b)=>noteStart(a)-noteStart(b));
   if(!L.length)return [];
   const raw=[];let cur=[L[0]];
   for(let i=1;i<L.length;i++){
-    const gap=((L[i].ts||0)-(cur[cur.length-1].ts||0))/60000;
+    const gap=(noteStart(L[i])-noteStart(cur[cur.length-1]))/60000;
     if(gap<=SEG_GAP)cur.push(L[i]); else{raw.push(cur);cur=[L[i]];}
   }
   raw.push(cur);
   return raw.map((items,i)=>{
-    const next=raw[i+1];
-    const start=items[0].ts, lastTs=items[items.length-1].ts;
-    let end=lastTs+20*60000;                       // 段尾留 20 分钟活动余量
-    if(next&&next[0].ts) end=Math.min(end,next[0].ts-60000);
-    if(end<lastTs) end=lastTs;
+    const prev=raw[i-1];
+    const spans=items.map(n=>parseSpan(n.text,n.ts)).filter(Boolean);
+    const lastTs=items[items.length-1].ts||0;
+    let start,end;
+    if(spans.length){
+      // 随记里写了时间段 → 起止完全按写的算
+      start=Math.min.apply(null,spans.map(s=>s.s));
+      end=Math.max.apply(null,spans.map(s=>s.e).concat([lastTs]));
+    }else{
+      // 没写 → 从上一个记录点（或起床时间）接起，到本条记录时刻结束
+      const prevEnd=prev?Math.max.apply(null,prev.map(n=>{
+        const sp=parseSpan(n.text,n.ts);return sp?sp.e:(n.ts||0);
+      })):null;
+      start=prevEnd!==null?prevEnd:(dayStart||lastTs);
+      end=lastTs;
+    }
+    if(end<start)end=start;
     const cc={};
     items.forEach(n=>{const k=n.cat||'none';cc[k]=(cc[k]||0)+1;});
     const ck=Object.keys(cc).sort((a,b)=>cc[b]-cc[a]);
@@ -1117,7 +1174,7 @@ function buildSegments(list){
     const statKeys=Object.keys(statCnt).sort((a,b)=>statCnt[b]-statCnt[a]);
     const text=items.map(n=>n.text).filter(Boolean).join('；');
     const key=items.slice().sort((a,b)=>(b.text||'').length-(a.text||'').length)[0];
-    return {items,start,end,mins:Math.max(5,Math.round((end-start)/60000)),
+    return {items,start,end,mins:Math.max(1,Math.round((end-start)/60000)),
       h0:hoursOf(start),h1:hoursOf(end),cats,eff,emoSeq,statKeys,statCnt,text,key};
   });
 }
@@ -1189,7 +1246,8 @@ function clockEmoji(ts){
 }
 function rvChartSVG(list,segs){
   const W=480,H=246,PL=34,PR=14,iw=W-PL-PR;
-  const hrs=list.map(n=>hoursOf(n.ts));
+  let hrs=list.map(n=>hoursOf(n.ts));
+  segs.forEach(s=>{hrs.push(s.h0,s.h1);});          // 段起点可能早于第一条记录（回填/手写时间段）
   let h0=Math.floor(Math.min.apply(null,hrs)),h1=Math.ceil(Math.max.apply(null,hrs));
   if(h1-h0<3){h0=Math.max(0,h0-1);h1=Math.min(24,h1+1);}
   if(h1<=h0){h0=Math.max(0,h0-1);h1=Math.min(24,h0+1);}
@@ -1367,7 +1425,13 @@ function renderReview(){
     body.innerHTML='<div class="empty">这天还没有记录<br>去「随记」随手记一笔，顺手打个 ⚡ 投入度<br>这里会自动长出坐标轴和事件轴</div>';
     return;
   }
-  const segs=buildSegments(list);
+  let dayStart=null;                                   // 第一条没写时间段的记录 → 从起床时间接起
+  if(dstr===todayStr()&&state.life&&state.life.wake){
+    const p=state.life.wake.split(':');
+    const w=new Date();w.setHours(+p[0]||0,+p[1]||0,0,0);
+    dayStart=w.getTime();
+  }
+  const segs=buildSegments(list,dayStart);
   const span=list.length>1?(hhmm(list[0].ts)+' – '+hhmm(list[list.length-1].ts)):hhmm(list[0].ts);
   const legend=CATS.filter(c=>segs.some(s=>s.cats.indexOf(c.k)>=0))
     .map(c=>`<span><i style="background:${c.c}"></i>${c.n}</span>`).join('');
@@ -1375,7 +1439,7 @@ function renderReview(){
   html.push(`<div class="tl-card">${rvChartSVG(list,segs)}
     <div class="tl-cap">每个点 = 一条真实记录 · 虚线 = 中间空了很久（不补值）· 底部色条 = 那段时间在做什么</div>
     <div class="legend">${legend}</div></div>`);
-  html.push(`<div class="rv-note" style="margin-top:8px">${list.length} 条记录 · ${span}。坐标轴只画你记过的时刻，没记的时段留白，不替你脑补。</div>`);
+  html.push(`<div class="rv-note" style="margin-top:8px">${list.length} 条记录 · ${span}。段的时间：随记里写了时间段就按写的算，没写就自动从上一条记录点（或起床）接到这条。</div>`);
   html.push(rvTimeline(segs));
   html.push(rvMap(list,segs));
   html.push(`<div class="oneline"><div class="ol-k">📍 今天的你</div><div class="ol-v">${esc(rvOneLine(list,segs))}</div></div>`);
