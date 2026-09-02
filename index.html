@@ -249,6 +249,17 @@
   .daynav .dbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 11px;
     font-size:13px;color:var(--sub);cursor:pointer;font-family:inherit;transition:.12s}
   .daynav .dbtn:active{background:var(--blue-bg)}
+  /* 多天列表：每天一条坐标轴，7 天前收起可展开 */
+  .rv-day{margin-top:20px;padding-top:16px;border-top:1px dashed #E3E9F4}
+  #rvBody .rv-day:first-child{border-top:none;margin-top:0;padding-top:0}
+  .rv-day-h{display:flex;align-items:center;gap:10px;width:100%;padding:5px 2px;border:none;background:none;
+    font-family:inherit;text-align:left}
+  .rv-day-h b{font-size:14px;color:var(--ink)}
+  .rv-day-h .rv-sum{font-size:12px;color:var(--faint)}
+  .rv-day-h .rv-tgl{margin-left:auto;font-size:12px;color:var(--blue);flex:none}
+  button.rv-day-h{cursor:pointer;border-radius:9px;transition:.12s}
+  button.rv-day-h:hover{background:var(--blue-bg)}
+  .rv-day-h.static{cursor:default}
   .tl-card{background:#FBFCFD;border:1px solid var(--line);border-radius:14px;padding:10px 6px 8px;margin-top:12px}
   .tl-card svg{width:100%;height:auto;display:block}
   .tl-cap{font-size:11px;color:var(--faint);text-align:center;margin-top:2px}
@@ -508,11 +519,6 @@
     <section class="sec" id="sec-review">
       <div class="card">
         <div class="card-h"><h3>我的一天</h3><span class="hint" id="rvCount"></span></div>
-        <div class="daynav">
-          <button class="dbtn" id="rvPrev">‹ 前一天</button>
-          <div class="dtitle" id="rvDate"></div>
-          <button class="dbtn" id="rvNext">后一天 ›</button>
-        </div>
         <div id="rvBody"></div>
       </div>
     </section>
@@ -670,7 +676,7 @@ function moodTxt(list){
   return (list||[]).map(m=>{const x=moodMeta(m);return x.e+x.k;}).join(' ');
 }
 /* 当前随记草稿：类别(单选) / 情绪+状态(多选) / 投入度(null=不评) */
-let noteDraft={cat:null,moods:[],eff:null};
+let noteDraft={cat:null,moods:[],eff:null,span:{s:'',e:''}};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -1055,6 +1061,10 @@ function renderNotes(){
       (n.moods||[]).forEach(m=>{const x=moodMeta(m);
         tags.push(`<span class="t ${isStat(m)?'stat':'mood'}">${x.e}${esc(m)}</span>`);});
       if(typeof n.eff==='number'&&n.eff>0) tags.push(`<span class="t eff">⚡ 投入度 ${n.eff*10}</span>`);
+      const sp=noteSpanOf(n);
+      if(sp.s!=null&&sp.e!=null) tags.push(`<span class="t">⏱ ${hhmm(sp.s)}–${hhmm(sp.e)}</span>`);
+      else if(sp.s!=null) tags.push(`<span class="t">⏱ 从 ${hhmm(sp.s)} 起</span>`);
+      else if(sp.e!=null) tags.push(`<span class="t">⏱ 到 ${hhmm(sp.e)}</span>`);
       item.innerHTML=`<div class="txt"><span class="stamp${n.ts?'':' old'}">🕘 ${ts}</span>`
         +`<div class="note-text">${esc(n.text)}</div>`
         +(tags.length?`<div class="n-tags">${tags.join('')}</div>`:'')
@@ -1099,13 +1109,7 @@ function renderNotePick(){
 }
 
 /* ---------- 我的一天：投入度坐标轴 + 事件轴 + 今日地图 ---------- */
-let rvDate=null;                                   // null = 今天
-function rvDateStr(){return rvDate||todayStr();}
-function shiftDate(d,n){
-  const p=String(d).split('-').map(Number);
-  const t=new Date(p[0],p[1]-1,p[2]+n);
-  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-}
+/* ---------- 我的一天：每天一条坐标轴，最近 7 天常开，更早的收起可展开 ---------- */
 /* 投入度坐标轴：纵轴 0–100，横轴 = 真实记录的时刻。没记的时段不补值 */
 function hoursOf(ts){const d=new Date(ts);return d.getHours()+d.getMinutes()/60;}
 /* 存储仍是 1–10，界面统一按 0–100 的「投入度」显示 */
@@ -1113,26 +1117,55 @@ function effPct(n){return (typeof n.eff==='number'&&n.eff>0)?Math.round(n.eff*10
 
 /* 把一天的记录切成「事件段」：相邻两条间隔 ≤45 分钟算同一段 */
 const SEG_GAP=45;
-/* 随记文本里手写的时间段：9:00-10:30 / 9点半~10点 / 9：00 至 11：30 … */
-const SPAN_RE=/(?<h1>\d{1,2})\s*[：:点]\s*(?:(?<m1>\d{1,2})\s*分?|(?<f1>半))?\s*[-–—~～至到]\s*(?<h2>\d{1,2})\s*[：:点]\s*(?:(?<m2>\d{1,2})\s*分?|(?<f2>半))?/;
+/* 随记文本里手写的时间段：9:00-10:30 / 7点-7.28 / 9点半~10点 / 9：00 至 11：30 / 9-10点 …
+   做法：先找范围分隔符，两端各自解析成「小时:分钟」。至少一头带时间标记（：:点.半）才算，避免把「去了3-4次」当成时间段 */
+const SPAN_HM='\\d{1,2}\\s*(?:[：:点.]\\s*\\d{1,2}\\s*分?|[：:点]\\s*半?|半)';
+const SPAN_RE=new RegExp('('+SPAN_HM+'|\\d{1,2})\\s*[-–—~～至到]\\s*('+SPAN_HM+'|\\d{1,2})');
+function parseHm(tok){
+  const s=String(tok||'').trim();
+  let m=s.match(/^(\d{1,2})\s*[：:点.]\s*(\d{1,2})\s*分?$/);        // 7:28 / 7点28 / 7.28 / 9点28分
+  if(m){const H=+m[1],M=+m[2];return (H<24&&M<60)?{v:H*60+M,mark:1}:null;}
+  m=s.match(/^(\d{1,2})\s*[：:点]\s*半$/);                          // 9点半
+  if(m){const H=+m[1];return H<24?{v:H*60+30,mark:1}:null;}
+  m=s.match(/^(\d{1,2})\s*[：:点]$/);                               // 7点 / 10：
+  if(m){const H=+m[1];return H<24?{v:H*60,mark:1}:null;}
+  m=s.match(/^(\d{1,2})半$/);                                       // 10半（少见兜底）
+  if(m){const H=+m[1];return H<24?{v:H*60+30,mark:1}:null;}
+  m=s.match(/^(\d{1,2})$/);                                        // 纯数字（无标记）
+  if(m){const H=+m[1];return H<24?{v:H*60,mark:0}:null;}
+  return null;
+}
 function parseSpan(text,ts){
   if(!text)return null;
   const m=String(text).match(SPAN_RE);
   if(!m)return null;
-  const g=m.groups;
-  const toMin=(h,mm,half)=>{
-    if(h==null)return null;
-    const H=+h; if(H>23)return null;
-    const M=(mm!=null)?+mm:(half?30:0); if(M>59)return null;
-    return H*60+M;
-  };
-  const a=toMin(g.h1,g.m1,g.f1), b=toMin(g.h2,g.m2,g.f2);
-  if(a==null||b==null||b<=a||b-a>720)return null;      // 结束要晚于开始，且不超过 12 小时
+  const a=parseHm(m[1]), b=parseHm(m[2]);
+  if(!a||!b)return null;
+  if(!(a.mark||b.mark))return null;                    // 两头都是裸数字（3-4次）→ 不算
+  if(b.v<=a.v||b.v-a.v>720)return null;                // 结束要晚于开始，且不超过 12 小时
   const base=new Date(ts||Date.now());base.setHours(0,0,0,0);
-  return {s:base.getTime()+a*60000,e:base.getTime()+b*60000};
+  return {s:base.getTime()+a.v*60000,e:base.getTime()+b.v*60000};
 }
-/* 每条记录的「段起点」：随记里写了时间段 → 用写的；没写 → 用记录时刻 */
-function noteStart(n){const sp=parseSpan(n.text,n.ts);return sp?sp.s:(n.ts||0);}
+/* 「HH:MM」→ 当天时间戳；非法输入返回 null */
+function hmToTs(hm,ts){
+  if(!hm)return null;
+  const p=String(hm).split(':'); if(p.length<2)return null;
+  const H=+p[0],M=+p[1]; if(!(H>=0&&H<24&&M>=0&&M<60))return null;
+  const base=new Date(ts||Date.now());base.setHours(0,0,0,0);
+  return base.getTime()+(H*60+M)*60000;
+}
+/* 每条记录的「时间段」：优先用输入框存的 n.span（可只填一头），其次解析随记文本里手写的 */
+function noteSpanOf(n){
+  if(n&&n.span&&(n.span.s||n.span.e)){
+    const s=hmToTs(n.span.s,n.ts),e=hmToTs(n.span.e,n.ts);
+    if(s!=null||e!=null)return {s:s,e:e};
+  }
+  const sp=parseSpan(n?n.text:'',n?n.ts:0);
+  return sp?{s:sp.s,e:sp.e}:{s:null,e:null};
+}
+function noteEndOf(n){const sp=noteSpanOf(n);return sp.e!=null?sp.e:(n.ts||0);}
+/* 段起点：写了开始时间（输入框或文本）→ 用写的；否则用记录时刻 */
+function noteStart(n){const sp=noteSpanOf(n);return sp.s!=null?sp.s:(n.ts||0);}
 function buildSegments(list,dayStart){
   const L=list.slice().sort((a,b)=>noteStart(a)-noteStart(b));
   if(!L.length)return [];
@@ -1144,18 +1177,19 @@ function buildSegments(list,dayStart){
   raw.push(cur);
   return raw.map((items,i)=>{
     const prev=raw[i-1];
-    const spans=items.map(n=>parseSpan(n.text,n.ts)).filter(Boolean);
+    const spans=items.map(noteSpanOf).filter(sp=>sp.s!=null||sp.e!=null);
     const lastTs=items[items.length-1].ts||0;
     let start,end;
     if(spans.length){
-      // 随记里写了时间段 → 起止完全按写的算
-      start=Math.min.apply(null,spans.map(s=>s.s));
-      end=Math.max.apply(null,spans.map(s=>s.e).concat([lastTs]));
+      // 写了时间（输入框或随记文本，可只填一头）→ 写了哪头按哪头；写了结束就以写的为准（补记不撑大段尾）
+      const ss=spans.map(sp=>sp.s).filter(x=>x!=null);
+      const ee=spans.map(sp=>sp.e).filter(x=>x!=null);
+      start=ss.length?Math.min.apply(null,ss)
+        :(prev?Math.max.apply(null,prev.map(noteEndOf)):(dayStart||lastTs));
+      end=ee.length?Math.max.apply(null,ee):lastTs;
     }else{
       // 没写 → 从上一个记录点（或起床时间）接起，到本条记录时刻结束
-      const prevEnd=prev?Math.max.apply(null,prev.map(n=>{
-        const sp=parseSpan(n.text,n.ts);return sp?sp.e:(n.ts||0);
-      })):null;
+      const prevEnd=prev?Math.max.apply(null,prev.map(noteEndOf)):null;
       start=prevEnd!==null?prevEnd:(dayStart||lastTs);
       end=lastTs;
     }
@@ -1378,7 +1412,9 @@ function rvOneLine(list,segs){
   return `不是没做事，而是${head}；${tail}。`;
 }
 /* 折叠区：原始记录 + 标签分布 */
-let rvDetailOpen=false;
+let rvOpenDetail={};                               // 每天的「原始记录」折叠状态
+const RV_RECENT=7;                                 // 最近 7 天（含今天）常开，更早的收起
+let rvOpenOld={};                                  // 收起的天：用户手动展开过的
 function rvDetail(list){
   const byCat={};CATS.forEach(c=>byCat[c.k]=0);
   list.forEach(n=>byCat[n.cat||'none']++);
@@ -1411,22 +1447,10 @@ function rvDetail(list){
     +barBlock('情绪',moodKeys,moodCnt,'')+barBlock('状态',statKeys,statCnt,'st')
     +`<div class="dist-h" style="margin-top:16px">归类后的原始记录</div>`+groupsHtml;
 }
-function renderReview(){
-  const body=document.getElementById('rvBody'); if(!body)return;
-  const dstr=rvDateStr();
-  const dt=document.getElementById('rvDate');
-  if(dt){
-    dt.innerHTML=esc(dayLabel(dstr))+(dstr===todayStr()?'':'<small>点我回今天</small>');
-    dt.onclick=()=>{rvDate=null;renderReview();};
-  }
-  const list=state.notes.filter(n=>(n.date||dateOf(n.ts))===dstr).sort((a,b)=>(a.ts||0)-(b.ts||0));
-  const cnt=document.getElementById('rvCount'); if(cnt)cnt.textContent=list.length?list.length+' 条记录':'';
-  if(!list.length){
-    body.innerHTML='<div class="empty">这天还没有记录<br>去「随记」随手记一笔，顺手打个 ⚡ 投入度<br>这里会自动长出坐标轴和事件轴</div>';
-    return;
-  }
-  let dayStart=null;                                   // 第一条没写时间段的记录 → 从起床时间接起
-  if(dstr===todayStr()&&state.life&&state.life.wake){
+/* 一天的完整内容：坐标轴 + 事件轴 + 今日地图 + 一句话 + 原始记录折叠 */
+function renderDayBody(dstr,list,today){
+  let dayStart=null;                                 // 第一条没写时间段的记录 → 从起床时间接起（仅今天）
+  if(dstr===today&&state.life&&state.life.wake){
     const p=state.life.wake.split(':');
     const w=new Date();w.setHours(+p[0]||0,+p[1]||0,0,0);
     dayStart=w.getTime();
@@ -1439,16 +1463,51 @@ function renderReview(){
   html.push(`<div class="tl-card">${rvChartSVG(list,segs)}
     <div class="tl-cap">每个点 = 一条真实记录 · 虚线 = 中间空了很久（不补值）· 底部色条 = 那段时间在做什么</div>
     <div class="legend">${legend}</div></div>`);
-  html.push(`<div class="rv-note" style="margin-top:8px">${list.length} 条记录 · ${span}。段的时间：随记里写了时间段就按写的算，没写就自动从上一条记录点（或起床）接到这条。</div>`);
+  html.push(`<div class="rv-note" style="margin-top:8px">${list.length} 条记录 · ${span}。段的时间：随记里写了时间段（或用 ⏱ 输入框填）就按写的算，没写就自动从上一条记录点（或起床）接到这条。</div>`);
   html.push(rvTimeline(segs));
   html.push(rvMap(list,segs));
-  html.push(`<div class="oneline"><div class="ol-k">📍 今天的你</div><div class="ol-v">${esc(rvOneLine(list,segs))}</div></div>`);
-  html.push(`<button class="fold" id="rvFold" style="margin-top:14px">${rvDetailOpen?'收起原始记录 ▴':'看看原始记录与标签分布 ▾'}</button>`);
-  if(rvDetailOpen) html.push(rvDetail(list));
-  html.push(`<div class="rv-note">上面所有「观察 / 想法 / 结论」都由本地规则从你这些记录里算出来，不联网、不外发，也不会替你编没发生过的事。</div>`);
-  body.innerHTML=html.join('');
-  const f=document.getElementById('rvFold');
-  if(f) f.onclick=()=>{rvDetailOpen=!rvDetailOpen;renderReview();};
+  html.push(`<div class="oneline"><div class="ol-k">📍 ${dstr===today?'今天的你':'这一天的你'}</div><div class="ol-v">${esc(rvOneLine(list,segs))}</div></div>`);
+  html.push(`<button class="fold" data-d="${dstr}" style="margin-top:14px">${rvOpenDetail[dstr]?'收起原始记录 ▴':'看看原始记录与标签分布 ▾'}</button>`);
+  if(rvOpenDetail[dstr]) html.push(rvDetail(list));
+  return html.join('');
+}
+function renderReview(){
+  const body=document.getElementById('rvBody'); if(!body)return;
+  const cnt=document.getElementById('rvCount');
+  const today=todayStr();
+  const days={};
+  state.notes.forEach(n=>{const d=n.date||dateOf(n.ts);(days[d]=days[d]||[]).push(n);});
+  const dlist=Object.keys(days).sort((a,b)=>a<b?1:-1);
+  if(cnt)cnt.textContent=dlist.length?dlist.length+' 天 · '+state.notes.length+' 条记录':'';
+  if(!dlist.length){
+    body.innerHTML='<div class="empty">还没有记录<br>去「随记」随手记一笔，顺手打个 ⚡ 投入度<br>这里会自动长出坐标轴和事件轴</div>';
+    return;
+  }
+  body.innerHTML=dlist.map((d,i)=>{
+    const p=d.split('-').map(Number);                 // 离今天的天数（按日期算，不按列表序号）
+    const ageDays=Math.round((new Date(new Date().setHours(0,0,0,0))-new Date(p[0],p[1]-1,p[2]))/86400000);
+    const recent=ageDays<RV_RECENT;                   // 离今天不满 7 天（含今天/未来）默认展开
+    const open=recent||!!rvOpenOld[d];
+    const list=days[d].slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+    if(!open){
+      const es=list.map(effPct).filter(x=>x!==null);
+      const avg=es.length?Math.round(es.reduce((a,b)=>a+b,0)/es.length):null;
+      return `<div class="rv-day" data-d="${d}"><button class="rv-day-h" data-d="${d}">
+        <b>${esc(dayLabel(d))}</b><span class="rv-sum">${list.length} 条${avg!=null?' · ⚡ '+avg:''}</span>
+        <span class="rv-tgl">展开 ▾</span></button></div>`;
+    }
+    const head=recent
+      ?`<div class="rv-day-h static"><b>${esc(dayLabel(d))}</b><span class="rv-sum">${list.length} 条记录</span></div>`
+      :`<button class="rv-day-h open" data-d="${d}"><b>${esc(dayLabel(d))}</b><span class="rv-sum">${list.length} 条记录</span><span class="rv-tgl">收起 ▴</span></button>`;
+    return `<div class="rv-day" data-d="${d}">${head}${renderDayBody(d,list,today)}</div>`;
+  }).join('')
+  +`<div class="rv-note">上面所有「观察 / 想法 / 结论」都由本地规则从你这些记录里算出来，不联网、不外发，也不会替你编没发生过的事。</div>`;
+  body.querySelectorAll('.rv-day-h[data-d]').forEach(h=>{
+    h.onclick=()=>{const d=h.dataset.d; rvOpenOld[d]=!rvOpenOld[d]; renderReview();};
+  });
+  body.querySelectorAll('.fold[data-d]').forEach(f=>{
+    f.onclick=()=>{const d=f.dataset.d; rvOpenDetail[d]=!rvOpenDetail[d]; renderReview();};
+  });
 }
 
 function renderSync(){
@@ -1498,17 +1557,27 @@ document.getElementById('followContent').addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();document.getElementById('followAdd').click();}
 });
 document.getElementById('custFilter').addEventListener('change',renderCustomers);
-document.getElementById('rvPrev').onclick=()=>{rvDate=shiftDate(rvDateStr(),-1);renderReview();};
-document.getElementById('rvNext').onclick=()=>{rvDate=shiftDate(rvDateStr(),1);renderReview();};
+/* 时间段输入框（⏱ 可选） */
+const spanFromEl=document.getElementById('spanFrom'), spanToEl=document.getElementById('spanTo');
+const spanClearBtn=document.getElementById('spanClear');
+if(spanClearBtn) spanClearBtn.onclick=()=>{
+  noteDraft.span={s:'',e:''};
+  if(spanFromEl)spanFromEl.value=''; if(spanToEl)spanToEl.value='';
+};
 document.getElementById('noteAdd').onclick=()=>{
   const inp=document.getElementById('noteInput');const v=inp.value.trim();if(!v)return;
-  state.notes.push({id:uid(),text:v,ts:Date.now(),date:todayStr(),
+  const sV=spanFromEl?spanFromEl.value:'', eV=spanToEl?spanToEl.value:'';
+  const badSpan=sV&&eV&&eV<=sV;                      // "HH:MM" 字符串直接比大小
+  const rec={id:uid(),text:v,ts:Date.now(),date:todayStr(),
     cat:noteDraft.cat||null, moods:noteDraft.moods.slice(),
-    eff:(noteDraft.eff===null?null:noteDraft.eff)});
+    eff:(noteDraft.eff===null?null:noteDraft.eff)};
+  if((sV||eV)&&!badSpan) rec.span={s:sV,e:eV};       // 只填一头也存
+  state.notes.push(rec);
   inp.value='';
-  noteDraft={cat:noteDraft.cat,moods:[],eff:null};   // 类别保留，情绪/状态/投入度重置
+  if(spanFromEl)spanFromEl.value=''; if(spanToEl)spanToEl.value='';
+  noteDraft={cat:noteDraft.cat,moods:[],eff:null,span:{s:'',e:''}};   // 类别保留，情绪/状态/投入度/时间段重置
   save();renderNotePick();renderNotes();renderReview();
-  toast(noteDraft.cat?'已记一笔':'已记一笔（未分类）');
+  toast(badSpan?'已记一笔（时间段结束要晚于开始，先按记录时刻算）':(noteDraft.cat?'已记一笔':'已记一笔（未分类）'));
 };
 document.getElementById('noteInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('noteAdd').click();}
