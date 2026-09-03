@@ -1220,20 +1220,19 @@ function segStateTxt(s){
   if(s.statKeys.length) a.push(s.statKeys.slice(0,2).map(statMeta).join(' '));
   return a.join('　')||'没标状态';
 }
-/* 段级观察：只用这段真实出现过的数据说话 */
+/* 段级观察：只复述你真实标记/填写的内容，不猜动机、不贴标签 */
 function segAI(s){
-  const out=[],txt=s.items.map(n=>n.text||'').join(' ');
-  if(s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0) out.push('注意力在这段出现了明显切换。');
-  if(s.eff!==null&&s.eff>=70&&s.cats[0]==='work') out.push('处理真实问题时投入度明显偏高——这是你的发动机。');
-  if(s.eff!==null&&s.eff<=40) out.push('这段投入度偏低，多半不是能力问题，是启动问题。');
-  if(s.cats[0]==='growth'&&s.eff!==null&&s.eff>=65) out.push('虽然没有按「任务」推进，但出现了主动探索——这是最难被计划、也最值钱的部分。');
+  const out=[];
+  if(s.statKeys.indexOf('分心')>=0) out.push('这段你自己标了「分心」。');
+  else if(s.statKeys.indexOf('摆烂')>=0) out.push('这段你自己标了「摆烂」。');
+  if(s.eff!==null&&s.eff>=70) out.push('投入度处在你今天的高位。');
+  else if(s.eff!==null&&s.eff<=40) out.push('这段投入度偏低。');
   if(s.emoSeq.length>1){
     const a=moodMeta(s.emoSeq[0]).s,b=moodMeta(s.emoSeq[s.emoSeq.length-1]).s;
-    if(a>b) out.push('情绪在这段是往下走的，留意是什么把它带下去的。');
-    else if(b>a) out.push('情绪在这段慢慢往上走了。');
+    if(a>b) out.push('情绪往下走了。');
+    else if(b>a) out.push('情绪往上走了。');
   }
-  if(!out.length&&/刷手机|走神|摸鱼|逃避|不想面对|拖延/.test(txt)) out.push('这段出现了明显的逃避动作，记下来就好，不用自责。');
-  if(out.length<2&&s.items.length>=3) out.push('这段记得很密，说明当时脑子一直在转。');
+  if(!out.length&&s.items.length>=4) out.push('这段记得很密，当时脑子一直在转。');
   return out.slice(0,2).join(' ');
 }
 /* 时段状态词，用于「状态变化」那几行 */
@@ -1248,23 +1247,26 @@ function phaseWord(s){
   if(s.emoSeq.length) return '平稳';
   return '只记了事，没标状态';
 }
-/* 反复出现的想法：本地主题词典 + 命中次数，不联网 */
+/* 反复出现的想法：本地主题词典。只用具体词，且 ≥2 条不同记录命中才显示——一条生活记录不值一段"洞察" */
 const THEMES=[
-  {n:'对当前工作的失望',kw:['失望','没意思','无聊','不想干','厌倦','没意义','内耗','麻木','混日子','无所谓','不想上班']},
-  {n:'对技术问题本身仍然有兴趣',kw:['技术','原理','为什么','机理','配方','结构','数据','测试','实验','参数','PU','树脂','固化','粘度','异氰酸酯']},
-  {n:'在想自己到底适不适合这条路',kw:['适不适合','适合吗','职业','要不要转','转行','值不值','这条路','前景','方向','赛道']},
-  {n:'学习启动困难',kw:['学不进去','启动','拖延','看不下去','静不下','学不动','不想学','没法开始','看不进']},
-  {n:'人际 / 协作上的消耗',kw:['沟通','开会','对接','同事','领导','汇报','推不动','扯皮','甩锅']},
-  {n:'身体在发出信号',kw:['累','困','头疼','失眠','睡','肩','脖子','腰','疲惫','没睡好','头晕']},
-  {n:'在逃避某件事',kw:['刷手机','逃避','不想面对','躲','摆烂','摸鱼','分心','走神']},
-  {n:'事情在往前推进',kw:['推进','完成','搞定','谈成','寄样','报价','回复','方案','签','成交','发了','确认']}
+  {n:'对当前工作有些失望',kw:['失望','不想干','厌倦','没意义','内耗','混日子','不想上班']},
+  {n:'对技术问题本身仍有兴趣',kw:['机理','异氰酸酯','固化','粘度','树脂','配方','聚合'],cats:['work','growth']},
+  {n:'在想自己适不适合这条路',kw:['适不适合','适合吗','要不要转','转行','值不值','这条路','前景','赛道']},
+  {n:'学习启动困难',kw:['学不进去','学不动','看不进','看不下去','静不下','没法开始']},
+  {n:'人际 / 协作上的消耗',kw:['推不动','扯皮','甩锅','背锅']},
+  {n:'身体在发出信号',kw:['头疼','头晕','失眠','没睡好','腰疼','肩颈','脖子疼']},
+  {n:'在逃避某件事',kw:['不想面对','摆烂','摸鱼','逃避']},
+  {n:'事情在往前推进',kw:['推进','搞定','谈成','寄样','报价','成交']}
 ];
 function rvThemes(list){
-  const all=list.map(n=>n.text||'');
+  const notes=list.map(n=>({t:(n.text||'').trim(),c:n.cat||'none'})).filter(x=>x.t);
   return THEMES.map(t=>{
     const hits=[];
-    all.forEach(s=>t.kw.forEach(w=>{if(s&&s.indexOf(w)>=0&&hits.indexOf(s)<0)hits.push(s);}));
-    return hits.length?{name:t.n,n:hits.length,eg:hits[0]}:null;
+    notes.forEach(x=>{
+      if(t.cats&&t.cats.indexOf(x.c)<0)return;          // 主题限定类别：技术/职业类只看工作与成长记录
+      if(t.kw.some(w=>x.t.indexOf(w)>=0)&&hits.indexOf(x.t)<0)hits.push(x.t);
+    });
+    return hits.length>=2?{name:t.n,n:hits.length,eg:hits[0]}:null;
   }).filter(Boolean).sort((a,b)=>b.n-a.n);
 }
 function fmtDur(m){
@@ -1367,7 +1369,7 @@ function rvMap(list,segs){
   const th=rvThemes(list);
   const thHtml=th.length?th.slice(0,4).map(t=>
     `<div class="theme-li">${esc(t.name)}<em>${esc(t.eg.slice(0,42))}${t.eg.length>42?'…':''}</em></div>`).join('')
-    :'<div class="tl-cap" style="text-align:left">今天记的字太少，暂时提炼不出反复出现的想法</div>';
+    :'<div class="tl-cap" style="text-align:left">今天没有哪个想法被反复记起（至少要 2 条不同记录命中同一主题才显示，避免单条记录被过度解读）</div>';
 
   const es=segs.filter(s=>s.eff!==null);
   let spot;
@@ -1380,7 +1382,7 @@ function rvMap(list,segs){
     if(catOf(hi.cats[0]).k!==catOf(lo.cats[0]).k&&hi.eff-lo.eff>=20)
       spot=`你在「${hc}」里的投入度（${hi.eff}）明显高于「${lc}」（${lo.eff}）——同样的你，换个事做差别就这么大。这才是今天最值得记住的一点。`;
     else if(dis.length>=2)
-      spot=`今天有 ${dis.length} 段明显分心 / 空转，落在 ${dis.map(s=>hhmm(s.start)).join('、')}。不是你不行，是这些时间点本来就不适合硬撑。`;
+      spot=`今天有 ${dis.length} 段你自己标了「分心 / 摆烂」，落在 ${dis.map(s=>hhmm(s.start)).join('、')}。`;
     else
       spot=`今天投入度最高的一段是 ${hhmm(hi.start)} 的「${hc}」（${hi.eff}），最低是 ${hhmm(lo.start)} 的「${lc}」（${lo.eff}），差 ${hi.eff-lo.eff} 分。回头看看这两段各自发生了什么。`;
   }
@@ -1391,25 +1393,31 @@ function rvMap(list,segs){
     <div class="map-h">🔍 今天最值得注意的事</div><div class="spot">${esc(spot)}</div>
   </div>`;
 }
-/* 一句话结论：只说一句，不写成工作汇报 */
+/* 一句话结论：只复述你记下的事实（时间大头/投入度极值/自标分心/主导情绪），不编心理叙事 */
 function rvOneLine(list,segs){
+  if(list.length<3) return '今天只记了 '+list.length+' 条，先不下判断——记多点，这里才说得准。';
+  const byCat={};CATS.forEach(c=>byCat[c.k]=0);
+  segs.forEach(s=>{                                 // 与今日地图同一套分摊口径
+    if(s.cats.length===2){byCat[s.cats[0]]+=s.mins*0.7;byCat[s.cats[1]]+=s.mins*0.3;}
+    else byCat[s.cats[0]]+=s.mins;
+  });
+  const rows=CATS.filter(c=>byCat[c.k]>=1).sort((a,b)=>byCat[b.k]-byCat[a.k]);
   const es=segs.filter(s=>s.eff!==null);
-  const hi=es.length?es.slice().sort((a,b)=>b.eff-a.eff)[0]:null;
-  const lo=es.length?es.slice().sort((a,b)=>a.eff-b.eff)[0]:null;
-  const dis=segs.some(s=>s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0);
-  const exp=segs.some(s=>s.statKeys.indexOf('有灵感')>=0||s.statKeys.indexOf('思考中')>=0);
-  let head;
-  if(dis&&exp) head='注意力在工作、探索和逃避之间来回切换';
-  else if(dis) head='注意力几度被拉走，但每次又回到了手上的事';
-  else if(exp) head='脑子一整天都没真正停过，而且多数时候是自己在往前想';
-  else head='一整天没什么大起大落，稳稳地过完了';
-  let tail;
-  if(!es.length) tail='投入度还没打分，拉一下滑块，这里就能说出更准的话';
-  else if(hi&&lo&&catOf(hi.cats[0]).k!==catOf(lo.cats[0]).k&&hi.eff-lo.eff>=20)
-    tail=`真正让你进入状态的，仍然是「${catOf(hi.cats[0]).n}」这种具体的事，而不是抽象的「${catOf(lo.cats[0]).n}」`;
-  else if(hi) tail=`进入状态最深的那一刻在 ${hhmm(hi.start)}，投入度 ${hi.eff}`;
-  else tail='投入度还没打分';
-  return `不是没做事，而是${head}；${tail}。`;
+  const parts=[];
+  if(rows.length) parts.push('时间大头在「'+rows[0].n+'」（'+fmtDur(byCat[rows[0].k])+'）');
+  if(es.length>=2){
+    const hi=es.slice().sort((a,b)=>b.eff-a.eff)[0], lo=es.slice().sort((a,b)=>a.eff-b.eff)[0];
+    parts.push('投入度最高 '+hhmm(hi.start)+'（'+hi.eff+'）、最低 '+hhmm(lo.start)+'（'+lo.eff+'）');
+  }else if(es.length===1){
+    parts.push('只有 '+hhmm(es[0].start)+' 那段评了投入度（'+es[0].eff+'）');
+  }
+  const dis=segs.filter(s=>s.statKeys.indexOf('分心')>=0||s.statKeys.indexOf('摆烂')>=0);
+  if(dis.length) parts.push(dis.length+' 段你自己标了分心');
+  const cnt={};list.forEach(n=>(n.moods||[]).forEach(m=>{if(!isStat(m))cnt[m]=(cnt[m]||0)+1;}));
+  const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+  if(top) parts.push('最常出现的情绪是「'+statMeta(top)+'」');
+  if(!parts.length) return '记了 '+list.length+' 条，但没评投入度也没标情绪——补一下标签，这里才有话可说。';
+  return parts.join('；')+'。';
 }
 /* 折叠区：原始记录 + 标签分布 */
 let rvOpenDetail={};                               // 每天的「原始记录」折叠状态
@@ -1466,7 +1474,7 @@ function renderDayBody(dstr,list,today){
   html.push(`<div class="rv-note" style="margin-top:8px">${list.length} 条记录 · ${span}。段的时间：随记里写了时间段（或用 ⏱ 输入框填）就按写的算，没写就自动从上一条记录点（或起床）接到这条。</div>`);
   html.push(rvTimeline(segs));
   html.push(rvMap(list,segs));
-  html.push(`<div class="oneline"><div class="ol-k">📍 ${dstr===today?'今天的你':'这一天的你'}</div><div class="ol-v">${esc(rvOneLine(list,segs))}</div></div>`);
+  html.push(`<div class="oneline"><div class="ol-k">📍 ${dstr===today?'今天的你':'这一天的你'}<em style="font-weight:400;color:var(--faint)">（只复述你记下的事实）</em></div><div class="ol-v">${esc(rvOneLine(list,segs))}</div></div>`);
   html.push(`<button class="fold" data-d="${dstr}" style="margin-top:14px">${rvOpenDetail[dstr]?'收起原始记录 ▴':'看看原始记录与标签分布 ▾'}</button>`);
   if(rvOpenDetail[dstr]) html.push(rvDetail(list));
   return html.join('');
