@@ -110,6 +110,21 @@
   .tbl .c-content{color:var(--ink);min-width:160px}
   .tbl .del{font-size:17px;padding:0 2px}
   .empty{color:var(--faint);font-size:14px;text-align:center;padding:16px 0}
+  /* 任务阶段看板 */
+  .task-board{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}
+  .task-board .tb{display:flex;align-items:center;gap:6px;background:#FBFCFD;border:1.5px solid var(--line);
+    border-radius:12px;padding:7px 12px;cursor:pointer;transition:.12s;font-size:13px;color:var(--sub);font-weight:500}
+  .task-board .tb b{font-size:13px;color:var(--ink);font-weight:700}
+  .task-board .tb:hover,.task-board .tb.on{border-color:var(--blue);background:var(--blue-bg);color:var(--blue-ink)}
+  .task-board .tb.on b{color:var(--blue)}
+  .task-item{flex-wrap:wrap}
+  .stage-pick{display:flex;gap:6px;flex-basis:100%;margin-top:9px;flex-wrap:wrap}
+  .stage-btn{font-size:12px;padding:4px 11px;border-radius:9px;border:1.5px solid var(--line);
+    background:#fff;color:var(--sub);cursor:pointer;transition:.12s;font-weight:500}
+  .stage-btn[data-st="todo"].on{background:var(--sub);border-color:var(--sub);color:#fff}
+  .stage-btn[data-st="doing"].on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .stage-btn[data-st="follow"].on{background:var(--amber);border-color:var(--amber);color:#fff}
+  .stage-btn[data-st="done"].on{background:var(--teal);border-color:var(--teal);color:#fff}
   /* accounts */
   .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .acc{background:#FBFCFD;border:1.5px solid var(--line);border-radius:14px;padding:14px}
@@ -440,7 +455,8 @@
     <!-- 任务池 -->
     <section class="sec" id="sec-tasks">
       <div class="card">
-        <div class="card-h"><h3>任务池</h3><span class="hint">按加入日期分组</span></div>
+        <div class="card-h"><h3>任务池</h3><span class="hint">按阶段跟进 · 看进度</span></div>
+        <div id="taskBoard" class="task-board"></div>
         <div id="taskList"></div>
         <div class="addline">
           <select id="taskCat"><option value="work">工作</option><option value="growth">成长</option><option value="life">生活</option></select>
@@ -707,7 +723,11 @@ function migrate(st){
     if(!('eff' in n)) n.eff=null;                    // 老随记未评投入度
   });
   if(!Array.isArray(st.tasks))st.tasks=[];
-  st.tasks.forEach(t=>{ if(!t.id)t.id=uid(); if(!t.date) t.date=t.ts?dateOf(t.ts):'更早'; });
+  st.tasks.forEach(t=>{
+    if(!t.id)t.id=uid();
+    if(!t.date) t.date=t.ts?dateOf(t.ts):'更早';
+    if(!t.stage) t.stage = t.done?'done':'todo';   // 旧数据：用完成态推断阶段
+  });
   if(!Array.isArray(st.top3))st.top3=[];
   st.top3.forEach(t=>{ if(!t.date) t.date=(st.today&&st.today.date)||todayStr(); });
   if(!Array.isArray(st.customers))st.customers=[];
@@ -905,46 +925,78 @@ function addAcc(a){
   state.accounts[a].push({id:uid(),text:v,ts:Date.now(),date:todayStr()});
   inp.value='';save();renderAcc(a);
 }
+let taskFilterStage='';            // ''=全部；否则按阶段筛选
 let taskDoneOpen=false;
+const TASK_STAGES=[
+  {key:'todo',label:'待办'},
+  {key:'doing',label:'进行中'},
+  {key:'follow',label:'待跟进'},
+  {key:'done',label:'完成'},
+];
+function stageLabel(k){const s=TASK_STAGES.find(x=>x.key===k);return s?s.label:'待办';}
 function taskItem(it){
-  const d=document.createElement('div');d.className='item'+(it.done?' done':'');
-  const meta=(it.done&&it.doneTs)?'✓ 完成于 '+stamp({ts:it.doneTs}):'🕘 建于 '+stamp(it);
-  d.innerHTML=`<div class="check${it.done?' on':''}">${it.done?'✓':''}</div>
+  const st=it.stage||'todo';
+  const d=document.createElement('div');d.className='item task-item'+(st==='done'?' done':'');
+  const meta=(st==='done'&&it.doneTs)?'✓ 完成于 '+stamp({ts:it.doneTs}):'🕘 建于 '+stamp(it);
+  const stageBtns=TASK_STAGES.map(s=>`<button class="stage-btn${st===s.key?' on':''}" data-st="${s.key}">${s.label}</button>`).join('');
+  d.innerHTML=`<div class="check${st==='done'?' on':''}">${st==='done'?'✓':''}</div>
     <div class="txt"><span class="stamp${(it.ts||it.doneTs)?'':' old'}">${meta}</span>
     <div style="margin-top:3px"><span class="tag ${it.cat}">${typeLabel(it.cat)}</span></div>
-    <input type="text" value="${esc(it.text)}"></div><button class="del">×</button>`;
-  d.querySelector('.check').onclick=()=>{it.done=!it.done;it.doneTs=it.done?Date.now():null;save();renderTasks();};
+    <input type="text" value="${esc(it.text)}"></div><button class="del">×</button>
+    <div class="stage-pick">${stageBtns}</div>`;
+  d.querySelector('.check').onclick=()=>{
+    const toDone=st!=='done';
+    it.stage=toDone?'done':'todo';
+    it.doneTs=toDone?Date.now():null;
+    save();renderTasks();
+  };
   d.querySelector('input').oninput=e=>{it.text=e.target.value;save();};
   d.querySelector('.del').onclick=()=>{state.tasks=state.tasks.filter(x=>x.id!=it.id);save();renderTasks();};
+  d.querySelectorAll('.stage-btn').forEach(b=>b.onclick=()=>{
+    it.stage=b.dataset.st;
+    it.doneTs=(it.stage==='done'&&!it.doneTs)?Date.now():null;
+    if(it.stage!=='done')it.doneTs=null;
+    save();renderTasks();
+  });
   return d;
 }
+function renderTaskBoard(){
+  const board=document.getElementById('taskBoard');
+  if(!board)return;
+  const counts={};TASK_STAGES.forEach(s=>counts[s.key]=0);
+  state.tasks.forEach(t=>{counts[t.stage||'todo']=(counts[t.stage||'todo']||0)+1;});
+  board.innerHTML='<div class="tb all'+(taskFilterStage===''?' on':'')+'" data-st="">全部 <b>'+state.tasks.length+'</b></div>'
+    +TASK_STAGES.map(s=>`<div class="tb${taskFilterStage===s.key?' on':''}" data-st="${s.key}">${s.label} <b>${counts[s.key]||0}</b></div>`).join('');
+  board.querySelectorAll('.tb').forEach(b=>b.onclick=()=>{taskFilterStage=b.dataset.st;renderTasks();});
+}
 function renderTasks(){
+  renderTaskBoard();
   const el=document.getElementById('taskList');
   if(!state.tasks.length){el.innerHTML='<div class="empty">任务池是空的，随手扔一个进来</div>';return;}
   el.innerHTML='';
-  const undone=state.tasks.filter(t=>!t.done), done=state.tasks.filter(t=>t.done);
-  if(!undone.length){
-    const e=document.createElement('div');e.className='empty';e.textContent='未完成的都清光了 🎉';el.appendChild(e);
-  }else{
-    const {g,ds}=groupByDate(undone);
-    ds.forEach(d=>{
-      const dv=document.createElement('div');dv.className='note-date';dv.textContent=dayLabel(d)+' 加入';
-      el.appendChild(dv);
-      g[d].slice().sort(byNew).forEach(it=>el.appendChild(taskItem(it)));
-    });
+  if(taskFilterStage){
+    state.tasks.filter(t=>(t.stage||'todo')===taskFilterStage).slice().sort(byNew)
+      .forEach(it=>el.appendChild(taskItem(it)));
+    return;
   }
+  ['todo','doing','follow'].forEach(sk=>{
+    const arr=state.tasks.filter(t=>(t.stage||'todo')===sk);
+    if(arr.length){
+      const dv=document.createElement('div');dv.className='note-date';dv.textContent=stageLabel(sk)+'（'+arr.length+'）';
+      el.appendChild(dv);
+      arr.slice().sort(byNew).forEach(it=>el.appendChild(taskItem(it)));
+    }
+  });
+  const done=state.tasks.filter(t=>(t.stage||'todo')==='done');
   if(done.length){
     const b=document.createElement('button');b.className='fold';
     b.textContent=taskDoneOpen?'收起已完成 ▴':'已完成 '+done.length+' 条 ▾';
     b.onclick=()=>{taskDoneOpen=!taskDoneOpen;renderTasks();};
     el.appendChild(b);
     if(taskDoneOpen){
-      const {g,ds}=groupByDate(done);
-      ds.forEach(d=>{
-        const dv=document.createElement('div');dv.className='note-date';dv.textContent=dayLabel(d)+' 加入';
-        el.appendChild(dv);
-        g[d].slice().sort((a,b2)=>(b2.doneTs||0)-(a.doneTs||0)).forEach(it=>el.appendChild(taskItem(it)));
-      });
+      const dv=document.createElement('div');dv.className='note-date';dv.textContent='完成（'+done.length+'）';
+      el.appendChild(dv);
+      done.slice().sort((a,b2)=>(b2.doneTs||0)-(a.doneTs||0)).forEach(it=>el.appendChild(taskItem(it)));
     }
   }
 }
@@ -1547,7 +1599,7 @@ document.getElementById('top3Add').onclick=()=>{
 document.getElementById('taskAdd').onclick=()=>{
   const cat=document.getElementById('taskCat').value;
   const inp=document.getElementById('taskInput');const v=inp.value.trim();if(!v)return;
-  state.tasks.push({id:uid(),cat,text:v,done:false,ts:Date.now(),date:todayStr(),doneTs:null});
+  state.tasks.push({id:uid(),cat,text:v,stage:'todo',done:false,ts:Date.now(),date:todayStr(),doneTs:null});
   inp.value='';save();renderTasks();
 };
 document.getElementById('followAdd').onclick=()=>{
